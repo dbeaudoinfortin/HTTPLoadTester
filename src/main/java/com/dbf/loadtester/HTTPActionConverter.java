@@ -6,6 +6,7 @@ import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.httpclient.HttpMethod;
 import org.apache.commons.httpclient.HttpMethodBase;
 import org.apache.commons.httpclient.methods.EntityEnclosingMethod;
@@ -39,7 +40,7 @@ public class HTTPActionConverter
 			headers.put(name, value);
 		}
 		httpAction.setHeaders(headers);
-		httpAction.setContent(httpRequest.getRequestBody());
+		httpAction.setContent(Base64.encodeBase64String(httpRequest.getRequestBody()));
 		return httpAction;
 	}
 	
@@ -73,7 +74,7 @@ public class HTTPActionConverter
 		
 		if(hasContent)
 		{
-			RequestEntity requestEntity = new InputStreamRequestEntity(new ByteArrayInputStream(action.getContent()), action.getContentType());
+			RequestEntity requestEntity = new InputStreamRequestEntity(new ByteArrayInputStream(Base64.decodeBase64(action.getContent())), action.getContentType());
 			((EntityEnclosingMethod) httpMethod).setRequestEntity(requestEntity);
 		}
 		

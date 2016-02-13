@@ -11,7 +11,7 @@ public class HTTPAction implements Serializable
 	private String servletPath;
 	private String method;
 	private String characterEncoding;
-	private byte[] content; 
+	private String content; 
 	private int contentLength;
 	private String contentType;
 	private Map<String, String> headers;
@@ -58,12 +58,12 @@ public class HTTPAction implements Serializable
 		this.characterEncoding = characterEncoding;
 	}
 	
-	public byte[] getContent()
+	public String getContent()
 	{
 		return content;
 	}
 	
-	public void setContent(byte[] content)
+	public void setContent(String content)
 	{
 		this.content = content;
 	}
