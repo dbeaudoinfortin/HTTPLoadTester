@@ -57,7 +57,11 @@ public class RecorderFilter implements Filter
 		HttpServletRequest httpRequest = (HttpServletRequest) request;
 		
 		//Don't capture control requests
-		if(handleParams(httpRequest) || !running) chain.doFilter(httpRequest, response);
+		if(handleParams(httpRequest) || !running)
+		{
+			chain.doFilter(httpRequest, response);
+			return;
+		}
 		
 		Date currentDate = new Date();
 		RecorderRequestWrapper httpRequestWrapper = new RecorderRequestWrapper(httpRequest);
@@ -99,16 +103,22 @@ public class RecorderFilter implements Filter
 	
 	private void closeTestPlan() throws IOException
 	{
-		if (testPlanWriter != null) testPlanWriter.close();
+		if (testPlanWriter != null)
+		{
+			testPlanWriter.close();
+			testPlanWriter = null;
+		}
 	}
 	
 	private void createNewTestPlan() throws IOException
 	{
-		closeTestPlan();
-		testPlanCount +=1;
-		
-		Path testPlanPath = testPlanDirectory.resolve("TestPlan-" + testPlanCount + ".json");
-		testPlanWriter = new BufferedWriter(new FileWriter(testPlanPath.toFile(), true));
+		if (testPlanWriter == null)
+		{
+			testPlanCount +=1;
+			
+			Path testPlanPath = testPlanDirectory.resolve("TestPlan-" + testPlanCount + ".json");
+			testPlanWriter = new BufferedWriter(new FileWriter(testPlanPath.toFile(), true));
+		}
 	}
 	
 	private void saveHTTPAction(HTTPAction action) throws IOException
