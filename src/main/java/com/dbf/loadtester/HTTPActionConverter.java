@@ -2,6 +2,7 @@ package com.dbf.loadtester;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.util.Date;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Map;
@@ -17,19 +18,21 @@ import org.apache.commons.httpclient.methods.PostMethod;
 import org.apache.commons.httpclient.methods.PutMethod;
 import org.apache.commons.httpclient.methods.RequestEntity;
 
-import com.dbf.loadtester.recorder.RecorderRequestWrapper;
+import com.dbf.loadtester.recorder.RecorderHttpServletRequestWrapper;
 
 public class HTTPActionConverter
 {
-	public static HTTPAction convertHTTPRequest(RecorderRequestWrapper httpRequest, long timePassed) throws IOException
+	public static HTTPAction convertHTTPRequest(RecorderHttpServletRequestWrapper httpRequest, Date currentDate, long timePassed) throws IOException
 	{
 		HTTPAction httpAction = new HTTPAction();
+		httpAction.setAbsoluteTime(currentDate);
 		httpAction.setTimePassed(timePassed);
 		httpAction.setServletPath(httpRequest.getServletPath());
 		httpAction.setMethod(httpRequest.getMethod());
 		httpAction.setCharacterEncoding(httpRequest.getCharacterEncoding());
 		httpAction.setContentLength(httpRequest.getContentLength());
 		httpAction.setContentType(httpRequest.getContentType());
+		httpAction.setQueryString(httpRequest.getQueryString());
 		
 		Map<String, String> headers = new HashMap<String, String>(); 
 		Enumeration<String> headerNames = httpRequest.getHeaderNames();
@@ -83,6 +86,10 @@ public class HTTPActionConverter
 			String headerName = entry.getKey();
 			httpMethod.addRequestHeader(headerName, entry.getValue());
 		}
+		
+		httpMethod.setQueryString(action.getQueryString());
+		httpMethod.setDoAuthentication(true);
+		httpMethod.setFollowRedirects(true);
 		
 		return httpMethod;
 	}

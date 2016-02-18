@@ -1,12 +1,14 @@
 package com.dbf.loadtester;
 
 import java.io.Serializable;
+import java.util.Date;
 import java.util.Map;
 
 public class HTTPAction implements Serializable
 {
 	private static final long serialVersionUID = 1L;
-		
+	
+	private Date absoluteTime;
 	private long timePassed;
 	private String servletPath;
 	private String method;
@@ -14,6 +16,8 @@ public class HTTPAction implements Serializable
 	private String content; 
 	private int contentLength;
 	private String contentType;
+
+	private String queryString;
 	private Map<String, String> headers;
 	
 	public HTTPAction(){}
@@ -96,6 +100,34 @@ public class HTTPAction implements Serializable
 	public void setHeaders(Map<String, String> headers)
 	{
 		this.headers = headers;
+	}
+
+	/**
+	 * @return the absoluteTime
+	 */
+	public Date getAbsoluteTime() {
+		return absoluteTime;
+	}
+
+	/**
+	 * @param absoluteTime the absoluteTime to set
+	 */
+	public void setAbsoluteTime(Date absoluteTime) {
+		this.absoluteTime = absoluteTime;
+	}
+
+	/**
+	 * @return the queryString
+	 */
+	public String getQueryString() {
+		return queryString;
+	}
+
+	/**
+	 * @param queryString the queryString to set
+	 */
+	public void setQueryString(String queryString) {
+		this.queryString = queryString;
 	}
 	
 }

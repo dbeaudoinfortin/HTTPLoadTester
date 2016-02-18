@@ -8,11 +8,16 @@ import javax.servlet.http.HttpServletRequestWrapper;
 
 import org.apache.commons.io.IOUtils;
 
-public class RecorderRequestWrapper extends HttpServletRequestWrapper
+/**
+ * Wraps an HttpServletRequest so that the input stream (request body) is stored in memory and 
+ * can be read multiple times.
+ *
+ */
+public class RecorderHttpServletRequestWrapper extends HttpServletRequestWrapper
 {
 	private final byte[] requestBody;
 	
-	public RecorderRequestWrapper (HttpServletRequest request) throws IOException
+	public RecorderHttpServletRequestWrapper (HttpServletRequest request) throws IOException
 	{     
 		super(request);
 		requestBody = IOUtils.toByteArray(request.getInputStream());

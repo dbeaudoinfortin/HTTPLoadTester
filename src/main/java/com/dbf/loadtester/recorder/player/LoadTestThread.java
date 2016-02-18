@@ -39,6 +39,7 @@ public class LoadTestThread implements Runnable
 	@Override
 	public void run()
 	{
+		//httpClient.getParams().setParameter(ALLOW_CIRCULAR_REDIRECTS, value);
 		try
 		{
 			long startTime = System.currentTimeMillis();

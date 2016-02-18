@@ -18,9 +18,9 @@ public class LoadTestPlayer
 {
 	private static final Logger log = Logger.getLogger(LoadTestPlayer.class);
 	
-	private static final long   DEFAULT_STAGGER_TIME = 3000;
-	private static final int    DEFAULT_THREAD_COUNT = 500;
-	private static final String DEFAULT_HOST = "http://localhost";
+	private static final long   DEFAULT_STAGGER_TIME = 1000;
+	private static final int    DEFAULT_THREAD_COUNT = 5;
+	private static final String DEFAULT_HOST = "http://localhost:10080/tpn-polycom-config-secure";
 	
 	private static final Double MAX_STAGGER_OFFSET = 0.75; 
 

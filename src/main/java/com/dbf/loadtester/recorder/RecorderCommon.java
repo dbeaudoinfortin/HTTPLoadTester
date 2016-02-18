@@ -5,16 +5,15 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.text.SimpleDateFormat;
 import java.util.Date;
-import javax.servlet.Filter;
-import javax.servlet.FilterChain;
-import javax.servlet.FilterConfig;
-import javax.servlet.ServletException;
+import java.util.Random;
+
 import javax.servlet.ServletRequest;
-import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 
 import org.apache.log4j.Logger;
+
 import com.dbf.loadtester.HTTPAction;
 import com.dbf.loadtester.HTTPActionConverter;
 import com.dbf.loadtester.util.Utils;
@@ -26,13 +25,13 @@ import com.google.gson.Gson;
  * Note that this only support a single test case at a time.
  *
  */
-public class RecorderFilter implements Filter
+public class RecorderCommon
 {
-	private static final Logger log = Logger.getLogger(RecorderFilter.class);
+	private static final Logger log = Logger.getLogger(RecorderCommon.class);
+	
 	private static final Gson gson = new Gson();
 	
 	private static final String DEFAULT_DIRECTORY_PATH = Utils.isWindows() ? "C:\\temp\\httploadtester\\" : "/var/httploadtester/";
-	private static final String PARAM_DIRECTORY_PATH = "TestPlanDirectory";
 	
 	private static final String PARAM_MAGIC_START = "MAGIC_START_PARAM";
 	private static final String PARAM_MAGIC_STOP  = "MAGIC_STOP_PARAM";
@@ -41,44 +40,34 @@ public class RecorderFilter implements Filter
 	
 	private boolean running = false;
 	
-	private Path testPlanDirectory;
-	private int testPlanCount = 0;
+	private final String testPlanPrefix = getTestPlanFileNamePrefix();
+	private Path testPlanDirectory = Paths.get(DEFAULT_DIRECTORY_PATH);
+	private int  testPlanCount = 0;
+	private Path testPlanPath = null;
 	private BufferedWriter testPlanWriter = null;
-
-	public void init(FilterConfig filterConfig) throws ServletException 
-	{
-		String testPlanDirectory = filterConfig.getInitParameter(PARAM_DIRECTORY_PATH);
-		if(null == testPlanDirectory || testPlanDirectory.isEmpty()) testPlanDirectory = DEFAULT_DIRECTORY_PATH;
-		this.testPlanDirectory = Paths.get(testPlanDirectory);
-	}
 	
-	public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException 
-    {	
-		HttpServletRequest httpRequest = (HttpServletRequest) request;
-		
-		//Don't capture control requests
-		if(handleParams(httpRequest) || !running)
-		{
-			chain.doFilter(httpRequest, response);
-			return;
-		}
-		
-		Date currentDate = new Date();
-		RecorderRequestWrapper httpRequestWrapper = new RecorderRequestWrapper(httpRequest);
-		
+	public ServletRequest handleHTTPRequest(HttpServletRequest httpRequest)
+	{
 		try
 		{
+			//Don't capture control requests
+			if(handleParams(httpRequest) || !running) return null;
+			
+			Date currentDate = new Date();
+			RecorderHttpServletRequestWrapper httpRequestWrapper = new RecorderHttpServletRequestWrapper(httpRequest);
+		
 			long timePassed = (previousTime < 0 ? 0 : currentDate.getTime() - previousTime);
 			previousTime = currentDate.getTime() ;
-	      	saveHTTPAction(HTTPActionConverter.convertHTTPRequest(httpRequestWrapper, timePassed));
+	      	saveHTTPAction(HTTPActionConverter.convertHTTPRequest(httpRequestWrapper, currentDate, timePassed));
+	      	return httpRequestWrapper;
 		}
 		catch(Exception e)
 		{
 			log.error("Unhandled Exception",e);
 		}
-      	
-      	chain.doFilter(httpRequest, response);
-    }
+		
+		return null;
+	}
 	
 	/**
 	 * Handles various control params. Returns true if any param was found.
@@ -105,6 +94,7 @@ public class RecorderFilter implements Filter
 	{
 		if (testPlanWriter != null)
 		{
+			log.info("Closing off test plan " + testPlanPath);
 			testPlanWriter.close();
 			testPlanWriter = null;
 		}
@@ -115,19 +105,39 @@ public class RecorderFilter implements Filter
 		if (testPlanWriter == null)
 		{
 			testPlanCount +=1;
-			
-			Path testPlanPath = testPlanDirectory.resolve("TestPlan-" + testPlanCount + ".json");
+			previousTime = -1L;
+			testPlanPath = testPlanDirectory.resolve(testPlanPrefix + testPlanCount + ".json");
+			log.info("Creating new test plan" + testPlanPath);
 			testPlanWriter = new BufferedWriter(new FileWriter(testPlanPath.toFile(), true));
 		}
 	}
 	
 	private void saveHTTPAction(HTTPAction action) throws IOException
 	{
-		testPlanWriter.write(gson.toJson(action));
-		testPlanWriter.newLine();
-		testPlanWriter.flush();
+		if(null != testPlanWriter)
+		{
+			testPlanWriter.write(gson.toJson(action));
+			testPlanWriter.newLine();
+			testPlanWriter.flush();
+		}
+	}
+	
+	private String getTestPlanFileNamePrefix()
+	{
+		return "TestPlan-"
+				+ (new SimpleDateFormat("yyyy-MM-dd")).format(new Date())
+				+ "-" + (new Random()).nextInt(Integer.MAX_VALUE) + "-";
 	}
 
-	public void destroy(){
+	public Path getTestPlanDirectory() {
+		return testPlanDirectory;
+	}
+
+	public void setTestPlanDirectory(Path testPlanDirectory) {
+		this.testPlanDirectory = testPlanDirectory;
+	}
+
+	public boolean isRunning() {
+		return running;
 	}
 }
