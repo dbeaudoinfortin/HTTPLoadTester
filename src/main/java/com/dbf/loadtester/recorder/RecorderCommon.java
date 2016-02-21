@@ -16,8 +16,8 @@ import org.apache.log4j.Logger;
 
 import com.dbf.loadtester.HTTPAction;
 import com.dbf.loadtester.HTTPActionConverter;
+import com.dbf.loadtester.json.JsonEncoder;
 import com.dbf.loadtester.util.Utils;
-import com.google.gson.Gson;
 
 /**
  * Records incoming HTTP requests and saves them to disk
@@ -28,9 +28,7 @@ import com.google.gson.Gson;
 public class RecorderCommon
 {
 	private static final Logger log = Logger.getLogger(RecorderCommon.class);
-	
-	private static final Gson gson = new Gson();
-	
+		
 	private static final String DEFAULT_DIRECTORY_PATH = Utils.isWindows() ? "C:\\temp\\httploadtester\\" : "/var/httploadtester/";
 	
 	private static final String PARAM_MAGIC_START = "MAGIC_START_PARAM";
@@ -51,7 +49,7 @@ public class RecorderCommon
 		try
 		{
 			//Don't capture control requests
-			if(handleParams(httpRequest) || !running) return null;
+			if(handleParams(httpRequest) || !running) return httpRequest;
 			
 			Date currentDate = new Date();
 			RecorderHttpServletRequestWrapper httpRequestWrapper = new RecorderHttpServletRequestWrapper(httpRequest);
@@ -66,7 +64,7 @@ public class RecorderCommon
 			log.error("Unhandled Exception",e);
 		}
 		
-		return null;
+		return httpRequest;
 	}
 	
 	/**
@@ -116,7 +114,7 @@ public class RecorderCommon
 	{
 		if(null != testPlanWriter)
 		{
-			testPlanWriter.write(gson.toJson(action));
+			testPlanWriter.write(JsonEncoder.toJson(action));
 			testPlanWriter.newLine();
 			testPlanWriter.flush();
 		}

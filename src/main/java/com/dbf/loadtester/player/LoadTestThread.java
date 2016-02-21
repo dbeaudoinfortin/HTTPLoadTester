@@ -1,45 +1,51 @@
-package com.dbf.loadtester.recorder.player;
+package com.dbf.loadtester.player;
 
 import java.util.Date;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.HttpMethod;
+import org.apache.commons.httpclient.contrib.ssl.EasySSLProtocolSocketFactory;
+import org.apache.commons.httpclient.protocol.Protocol;
+import org.apache.commons.httpclient.protocol.ProtocolSocketFactory;
 import org.apache.log4j.Logger;
 
 import com.dbf.loadtester.HTTPAction;
 import com.dbf.loadtester.HTTPActionConverter;
-import com.dbf.loadtester.recorder.stats.ActionTime;
+import com.dbf.loadtester.player.config.Constants;
+import com.dbf.loadtester.player.config.PlayerConfiguration;
+import com.dbf.loadtester.player.stats.ActionTime;
 
 public class LoadTestThread implements Runnable
 {
 	private static final Logger log = Logger.getLogger(LoadTestThread.class);
-			
-	private static final boolean USE_TEST_PLAN_TIMINGS = true;
 	
-	private final HttpClient httpClient = new HttpClient();	
+	private HttpClient httpClient;	
 	
-	private List<HTTPAction> actions;
 	private int threadNumber;
-	private String host;
-	private long minRuntime;
+	private PlayerConfiguration config;
 	
 	private Map<String, ActionTime> actionTimes = new HashMap<String, ActionTime>(100);
 	
-	public LoadTestThread(List<HTTPAction> actions, int threadNumber, String host, long minRuntime)
+	public LoadTestThread(PlayerConfiguration config, int threadNumber)
 	{
+		this.config = config;
 		this.threadNumber = threadNumber;
-		this.actions = actions;
-		this.host = host;
-		this.minRuntime = minRuntime;
+		initHTTPClient(config);
+	}
+	
+	private void initHTTPClient(PlayerConfiguration config)
+	{
+		//Allows us to ignore SSL Certificates. Great for testing!
+		Protocol easyhttps = new Protocol("https", (ProtocolSocketFactory)new EasySSLProtocolSocketFactory(), Integer.parseInt(config.getHttpsPort()));
+		Protocol.registerProtocol("https", easyhttps);
+		httpClient = new HttpClient();
 	}
 	
 	@Override
 	public void run()
 	{
-		//httpClient.getParams().setParameter(ALLOW_CIRCULAR_REDIRECTS, value);
 		try
 		{
 			long startTime = System.currentTimeMillis();
@@ -48,10 +54,10 @@ public class LoadTestThread implements Runnable
 			do
 			{
 				long lastActionTime = System.currentTimeMillis();
-				for(HTTPAction action : actions)
+				for(HTTPAction action : config.getActions())
 				{					
 					//By-pass Test Plan timings for debug purposes
-					long waitTime = (USE_TEST_PLAN_TIMINGS ? action.getTimePassed() : 500);
+					long waitTime = (Constants.USE_TEST_PLAN_TIMINGS ? action.getTimePassed() : Constants.DEFAULT_TIME_BETWEEN_ACTIONS);
 					
 					//Ensure that the start time of every action matches the timings in the test plan
 					long currentTime = System.currentTimeMillis();
@@ -73,7 +79,7 @@ public class LoadTestThread implements Runnable
 				}
 				runCount++;
 			}
-			while((new Date()).getTime() - startTime < minRuntime);
+			while((new Date()).getTime() - startTime < config.getMinRunTime());
 			
 			long endTime = System.currentTimeMillis();
 			double timeInMinutes = (endTime - startTime)/60000.0;
@@ -129,7 +135,7 @@ public class LoadTestThread implements Runnable
 	
 	private Long runAction(HTTPAction action) throws Exception
 	{
-		HttpMethod method = HTTPActionConverter.convertHTTPAction(action, host);
+		HttpMethod method = HTTPActionConverter.convertHTTPAction(action, config.getHost(), config.getHttpPort(), config.getHttpsPort());
 		
 		if(null == method)
 		{

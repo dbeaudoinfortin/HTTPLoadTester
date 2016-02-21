@@ -1,4 +1,4 @@
-package com.dbf.loadtester.recorder.stats;
+package com.dbf.loadtester.player.stats;
 
 public class ActionTime
 {

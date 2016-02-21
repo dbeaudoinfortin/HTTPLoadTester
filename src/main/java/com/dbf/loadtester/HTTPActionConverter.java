@@ -43,13 +43,15 @@ public class HTTPActionConverter
 			headers.put(name, value);
 		}
 		httpAction.setHeaders(headers);
+		
+		httpAction.setScheme(httpRequest.getScheme());
 		httpAction.setContent(Base64.encodeBase64String(httpRequest.getRequestBody()));
 		return httpAction;
 	}
 	
-	public static HttpMethod convertHTTPAction(HTTPAction action, String host)
+	public static HttpMethod convertHTTPAction(HTTPAction action, String host, String httpPort, String httpsPort)
 	{
-		String url = host + action.getServletPath();
+		String url = action.getScheme() + "://" + host + ":" + (action.getScheme().equals("https") ? httpsPort : httpPort) + action.getServletPath();
 		String actionMethod = action.getMethod().toUpperCase();
 		
 		boolean hasContent = false;
@@ -84,13 +86,19 @@ public class HTTPActionConverter
 		for (Map.Entry<String,String> entry : action.getHeaders().entrySet())
 		{
 			String headerName = entry.getKey();
-			httpMethod.addRequestHeader(headerName, entry.getValue());
+			if(headerName.equals("host"))
+			{
+				httpMethod.addRequestHeader(headerName, host);
+			}
+			else
+			{
+				httpMethod.addRequestHeader(headerName, entry.getValue());
+			}
 		}
 		
 		httpMethod.setQueryString(action.getQueryString());
-		httpMethod.setDoAuthentication(true);
-		httpMethod.setFollowRedirects(true);
-		
+		//httpMethod.setDoAuthentication(false);
+		httpMethod.setFollowRedirects(false);
 		return httpMethod;
 	}
 }

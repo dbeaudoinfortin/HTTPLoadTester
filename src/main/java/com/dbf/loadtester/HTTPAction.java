@@ -16,7 +16,7 @@ public class HTTPAction implements Serializable
 	private String content; 
 	private int contentLength;
 	private String contentType;
-
+	private String scheme;
 	private String queryString;
 	private Map<String, String> headers;
 	
@@ -128,6 +128,14 @@ public class HTTPAction implements Serializable
 	 */
 	public void setQueryString(String queryString) {
 		this.queryString = queryString;
+	}
+
+	public String getScheme() {
+		return scheme;
+	}
+
+	public void setScheme(String scheme) {
+		this.scheme = scheme;
 	}
 	
 }
