@@ -13,7 +13,6 @@ import org.apache.log4j.Logger;
 
 import com.dbf.loadtester.HTTPAction;
 import com.dbf.loadtester.HTTPActionConverter;
-import com.dbf.loadtester.player.config.Constants;
 import com.dbf.loadtester.player.config.PlayerConfiguration;
 import com.dbf.loadtester.player.stats.ActionTime;
 
@@ -57,7 +56,7 @@ public class LoadTestThread implements Runnable
 				for(HTTPAction action : config.getActions())
 				{					
 					//By-pass Test Plan timings for debug purposes
-					long waitTime = (Constants.USE_TEST_PLAN_TIMINGS ? action.getTimePassed() : Constants.DEFAULT_TIME_BETWEEN_ACTIONS);
+					long waitTime = (config.getActionDelay() < 0 ? action.getTimePassed() : config.getActionDelay());
 					
 					//Ensure that the start time of every action matches the timings in the test plan
 					long currentTime = System.currentTimeMillis();

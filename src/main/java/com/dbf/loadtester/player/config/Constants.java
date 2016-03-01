@@ -13,7 +13,6 @@ public class Constants
 	public static final int     DEFAULT_THREAD_COUNT = 5;
 	
 	//TIMINGS
-	public static final boolean USE_TEST_PLAN_TIMINGS = true;
-	public static final int DEFAULT_TIME_BETWEEN_ACTIONS = 100;
+	public static final int DEFAULT_TIME_BETWEEN_ACTIONS = -1;
 	
 }
