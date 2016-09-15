@@ -2,6 +2,8 @@ package com.dbf.loadtester.recorder;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+
+import javax.servlet.ReadListener;
 import javax.servlet.ServletInputStream;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletRequestWrapper;
@@ -26,17 +28,43 @@ public class RecorderHttpServletRequestWrapper extends HttpServletRequestWrapper
 	@Override
 	public ServletInputStream getInputStream()
 	{
-		final ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(requestBody);
-		ServletInputStream inputStream = new ServletInputStream()
-		{
-			@Override
-			public int read() throws IOException
-			{
-				return byteArrayInputStream.read();
-			}
-		};
-        return inputStream;  
+		return new RepeatableServletInputStream(new ByteArrayInputStream(requestBody));
 	}
+	
+	public class RepeatableServletInputStream extends ServletInputStream
+    {
+        private ByteArrayInputStream  byteArrayInputStream;
+
+        public RepeatableServletInputStream(ByteArrayInputStream  byteArrayInputStream)
+        {
+            this.byteArrayInputStream = byteArrayInputStream;
+        }
+
+        @Override
+        public boolean isFinished() {
+            return byteArrayInputStream.available() == 0;
+        }
+
+        @Override
+        public boolean isReady() {
+            return true;
+        }
+
+        @Override
+        public void setReadListener(ReadListener readListener) {}
+
+        @Override
+        public int read() throws IOException
+        {
+            return byteArrayInputStream.read();
+        }
+        @Override
+        public void reset()
+        {
+            byteArrayInputStream.reset();
+        }
+
+    }
 	
 	public byte[] getRequestBody()
 	{

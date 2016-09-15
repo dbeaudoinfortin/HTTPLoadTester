@@ -23,7 +23,7 @@ public class RecorderServletFilter extends RecorderCommon implements Filter
 {
 	private static final Logger log = Logger.getLogger(RecorderServletFilter.class);
 
-	private static final String PARAM_DIRECTORY_PATH = "TestPlanDirectory";
+	public static final String PARAM_DIRECTORY_PATH = "TestPlanDirectory";
 	
 	public void init(FilterConfig filterConfig) throws ServletException 
 	{

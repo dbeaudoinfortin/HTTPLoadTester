@@ -9,7 +9,7 @@ import java.util.List;
 
 import org.apache.log4j.Logger;
 
-import com.dbf.loadtester.HTTPAction;
+import com.dbf.loadtester.action.HTTPAction;
 import com.google.gson.Gson;
 
 public class JsonEncoder

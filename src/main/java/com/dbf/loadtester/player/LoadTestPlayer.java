@@ -3,8 +3,10 @@ package com.dbf.loadtester.player;
 import java.io.IOException;
 import java.util.Random;
 
+import org.apache.http.client.HttpClient;
 import org.apache.log4j.Logger;
 
+import com.dbf.loadtester.httpclient.HTTPClientFactory;
 import com.dbf.loadtester.player.config.Constants;
 import com.dbf.loadtester.player.config.PlayerConfiguration;
 
@@ -46,9 +48,11 @@ public class LoadTestPlayer
 	{
 		try
 		{
-			for (int i = 1; i < config.getThreadCount() +1; i++)
+			HttpClient client = HTTPClientFactory.getHttpClient(config.getThreadCount());
+			
+			for (int i = 1; i < config.getThreadCount() + 1; i++)
 			{
-				Thread thread = new Thread(new LoadTestThread(config, i));
+				Thread thread = new Thread(new LoadTestThread(config, i, client));
 				thread.start();
 				log.info("Starting thread " + i);
 				

@@ -4,28 +4,19 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.TrustManager;
-import org.apache.commons.httpclient.contrib.ssl.EasyX509TrustManager;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpRequestBase;
-import org.apache.http.conn.ssl.DefaultHostnameVerifier;
-import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
-import org.apache.http.impl.client.HttpClientBuilder;
-import org.apache.http.ssl.SSLContexts;
 import org.apache.log4j.Logger;
 
-import com.dbf.loadtester.HTTPAction;
-import com.dbf.loadtester.HTTPActionConverter;
+import com.dbf.loadtester.action.HTTPAction;
+import com.dbf.loadtester.action.HTTPConverter;
 import com.dbf.loadtester.player.config.PlayerConfiguration;
 import com.dbf.loadtester.player.stats.ActionTime;
 
 public class LoadTestThread implements Runnable
 {
 	private static final Logger log = Logger.getLogger(LoadTestThread.class);
-	
-	private static SSLConnectionSocketFactory sslFactory;
 	
 	private final HttpClient httpClient;	
 	
@@ -34,25 +25,11 @@ public class LoadTestThread implements Runnable
 	
 	private final Map<String, ActionTime> actionTimes = new HashMap<String, ActionTime>(100);
 	
-	static
-	{
-		try
-		{
-		SSLContext sslcontext = SSLContexts.custom().useProtocol("SSL").build();
-        sslcontext.init(null, new TrustManager[] {new EasyX509TrustManager(null)}, null);
-        sslFactory = new SSLConnectionSocketFactory(sslcontext, new DefaultHostnameVerifier());
-		}
-        catch (Throwable t)
-		{
-        	log.fatal("Fail to initialize SSL trust Manager.",t);
-		}
-	}
-	
-	public LoadTestThread(PlayerConfiguration config, int threadNumber)
+	public LoadTestThread(PlayerConfiguration config, int threadNumber, HttpClient httpClient)
 	{
 		this.config = config;
 		this.threadNumber = threadNumber;
-		httpClient = HttpClientBuilder.create().disableRedirectHandling().setSSLSocketFactory(sslFactory).build();
+		this.httpClient = httpClient;
 	}
 	
 	@Override
@@ -147,7 +124,7 @@ public class LoadTestThread implements Runnable
 	
 	private Long runAction(HTTPAction action) throws Exception
 	{
-		HttpRequestBase method = HTTPActionConverter.convertHTTPAction(action, config.getHost(), config.getHttpPort(), config.getHttpsPort());
+		HttpRequestBase method = HTTPConverter.convertHTTPActionToHTTPClientRequest(action, config.getHost(), config.getHttpPort(), config.getHttpsPort());
 		
 		if(null == method)
 		{

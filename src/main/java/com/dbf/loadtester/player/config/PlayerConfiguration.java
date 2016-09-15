@@ -6,7 +6,7 @@ import java.util.List;
 
 import org.apache.log4j.Logger;
 
-import com.dbf.loadtester.HTTPAction;
+import com.dbf.loadtester.action.HTTPAction;
 import com.dbf.loadtester.json.JsonEncoder;
 
 public class PlayerConfiguration

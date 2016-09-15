@@ -14,8 +14,8 @@ import javax.servlet.http.HttpServletRequest;
 
 import org.apache.log4j.Logger;
 
-import com.dbf.loadtester.HTTPAction;
-import com.dbf.loadtester.HTTPActionConverter;
+import com.dbf.loadtester.action.HTTPAction;
+import com.dbf.loadtester.action.HTTPConverter;
 import com.dbf.loadtester.json.JsonEncoder;
 import com.dbf.loadtester.util.Utils;
 
@@ -56,7 +56,7 @@ public class RecorderCommon
 		
 			long timePassed = (previousTime < 0 ? 0 : currentDate.getTime() - previousTime);
 			previousTime = currentDate.getTime() ;
-	      	saveHTTPAction(HTTPActionConverter.convertHTTPRequest(httpRequestWrapper, currentDate, timePassed));
+	      	saveHTTPAction(HTTPConverter.convertServletRequestToHTTPAction(httpRequestWrapper, currentDate, timePassed));
 	      	return httpRequestWrapper;
 		}
 		catch(Exception e)

@@ -1,4 +1,4 @@
-package com.dbf.loadtester;
+package com.dbf.loadtester.action;
 
 import java.io.Serializable;
 import java.util.Date;

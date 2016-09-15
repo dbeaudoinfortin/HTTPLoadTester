@@ -1,4 +1,4 @@
-package com.dbf.loadtester;
+package com.dbf.loadtester.action;
 
 import java.io.IOException;
 import java.net.URI;
@@ -23,9 +23,9 @@ import org.apache.http.entity.ContentType;
 
 import com.dbf.loadtester.recorder.RecorderHttpServletRequestWrapper;
 
-public class HTTPActionConverter
+public class HTTPConverter
 {
-	public static HTTPAction convertHTTPRequest(RecorderHttpServletRequestWrapper httpRequest, Date currentDate, long timePassed) throws IOException
+	public static HTTPAction convertServletRequestToHTTPAction(RecorderHttpServletRequestWrapper httpRequest, Date currentDate, long timePassed) throws IOException
 	{
 		HTTPAction httpAction = new HTTPAction();
 		httpAction.setAbsoluteTime(currentDate);
@@ -36,7 +36,25 @@ public class HTTPActionConverter
 		httpAction.setContentLength(httpRequest.getContentLength());
 		httpAction.setContentType(httpRequest.getContentType());
 		httpAction.setQueryString(httpRequest.getQueryString());
-		
+		httpAction.setHeaders(extractHeaders(httpRequest));
+		httpAction.setScheme(httpRequest.getScheme());
+		httpAction.setContent(Base64.encodeBase64String(httpRequest.getRequestBody()));
+		return httpAction;
+	}
+	
+	public static HttpRequestBase convertHTTPActionToHTTPClientRequest(HTTPAction action, String host, int httpPort, int httpsPort) throws URISyntaxException
+	{
+		return buildHTTPClientRequest(action.getScheme(), host, httpPort, httpsPort, action.getQueryString(), action.getPath(), action.getMethod(), action.getHeaders(), Base64.decodeBase64(action.getContent()), action.getContentType());
+	}
+	
+	public static HttpRequestBase convertServletRequestToHTTPClientRequest(RecorderHttpServletRequestWrapper httpRequest, String host, int httpPort, int httpsPort) throws URISyntaxException
+	{
+		return buildHTTPClientRequest(httpRequest.getScheme(), host, httpPort, httpsPort, httpRequest.getQueryString(), httpRequest.getPathInfo(), httpRequest.getMethod(), extractHeaders(httpRequest),
+				httpRequest.getRequestBody(), httpRequest.getContentType());
+	}
+	
+	private static Map<String, String> extractHeaders(RecorderHttpServletRequestWrapper httpRequest)
+	{
 		Map<String, String> headers = new HashMap<String, String>(); 
 		Enumeration<String> headerNames = httpRequest.getHeaderNames();
 		while(headerNames.hasMoreElements())
@@ -45,24 +63,14 @@ public class HTTPActionConverter
 			String value = httpRequest.getHeader(name);
 			headers.put(name, value);
 		}
-		httpAction.setHeaders(headers);
 		
-		httpAction.setScheme(httpRequest.getScheme());
-		httpAction.setContent(Base64.encodeBase64String(httpRequest.getRequestBody()));
-		return httpAction;
+		return headers;
 	}
 	
-	public static HttpRequestBase convertHTTPAction(HTTPAction action, String host, int httpPort, int httpsPort) throws URISyntaxException
+	private static HttpRequestBase buildHTTPClientRequest(String scheme, String host, int httpPort, int httpsPort, String queryString, String path, String method, Map<String,String> headers, byte[] content, String contentType) throws URISyntaxException
 	{
-		URIBuilder uriBuilder = new URIBuilder();
-		uriBuilder.setScheme(action.getScheme());
-		uriBuilder.setHost(host);
-		uriBuilder.setPort(action.getScheme().equals("https") ? httpsPort : httpPort);
-		uriBuilder.setCustomQuery(action.getQueryString());
-		uriBuilder.setPath(action.getPath());
-		
-		URI uri = uriBuilder.build();
-		String actionMethod = action.getMethod().toUpperCase();
+		URI uri = buildURI(scheme, host, httpPort, httpsPort, queryString, path);
+		String actionMethod = method.toUpperCase();
 		
 		boolean hasContent = false;
 		
@@ -92,12 +100,12 @@ public class HTTPActionConverter
 		
 		if(hasContent)
 		{
-			HttpEntity requestEntity = new ByteArrayEntity((Base64.decodeBase64(action.getContent())), ContentType.parse(action.getContentType()));
+			HttpEntity requestEntity = new ByteArrayEntity(content, ContentType.parse(contentType));
 			((HttpEntityEnclosingRequestBase) httpMethod).setEntity(requestEntity);
 			
 		}
 		
-		for (Map.Entry<String,String> entry : action.getHeaders().entrySet())
+		for (Map.Entry<String,String> entry : headers.entrySet())
 		{
 			String headerName = entry.getKey();
 			if(headerName.equals("host"))
@@ -112,4 +120,16 @@ public class HTTPActionConverter
 		
 		return httpMethod;
 	}
+	
+	private static URI buildURI(String scheme, String host, int httpPort, int httpsPort, String queryString, String path) throws URISyntaxException
+	{
+		URIBuilder uriBuilder = new URIBuilder();
+		uriBuilder.setScheme(scheme);
+		uriBuilder.setHost(host);
+		uriBuilder.setPort(scheme.equals("https") ? httpsPort : httpPort);
+		uriBuilder.setCustomQuery(queryString);
+		uriBuilder.setPath(path);
+		return uriBuilder.build();
+	}
+	
 }
