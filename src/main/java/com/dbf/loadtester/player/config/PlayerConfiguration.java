@@ -14,8 +14,8 @@ public class PlayerConfiguration
 	private static final Logger log = Logger.getLogger(PlayerConfiguration.class);
 	
 	private String host = Constants.DEFAULT_HOST;
-	private String httpPort = Constants.DEFAULT_HTTP_PORT;
-	private String httpsPort = Constants.DEFAULT_HTTPS_PORT;
+	private int httpPort = Constants.DEFAULT_HTTP_PORT;
+	private int httpsPort = Constants.DEFAULT_HTTPS_PORT;
 	private int threadCount = Constants.DEFAULT_THREAD_COUNT;
 	private long staggerTime = Constants.DEFAULT_STAGGER_TIME;
 	private int actionDelay = Constants.DEFAULT_TIME_BETWEEN_ACTIONS;
@@ -71,10 +71,10 @@ public class PlayerConfiguration
 			host = args[5];
 			log.info("Using host: " + host);
 			
-			httpPort = args[6];
+			httpPort = Integer.parseInt(args[6]);
 			log.info("Using HTTP port: " + httpPort);
 			
-			httpsPort = args[7];
+			httpsPort = Integer.parseInt(args[7]);
 			log.info("Using default HTTPs port: " + httpsPort);
 		}
 		else
@@ -180,22 +180,22 @@ public class PlayerConfiguration
 		this.host = host;
 	}
 
-	public String getHttpPort()
+	public int getHttpPort()
 	{
 		return httpPort;
 	}
 
-	public void setHttpPort(String httpPort)
+	public void setHttpPort(int httpPort)
 	{
 		this.httpPort = httpPort;
 	}
 
-	public String getHttpsPort()
+	public int getHttpsPort()
 	{
 		return httpsPort;
 	}
 
-	public void setHttpsPort(String httpsPort)
+	public void setHttpsPort(int httpsPort)
 	{
 		this.httpsPort = httpsPort;
 	}

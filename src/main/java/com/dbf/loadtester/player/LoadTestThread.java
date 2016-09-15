@@ -4,11 +4,16 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.apache.commons.httpclient.HttpClient;
-import org.apache.commons.httpclient.HttpMethod;
-import org.apache.commons.httpclient.contrib.ssl.EasySSLProtocolSocketFactory;
-import org.apache.commons.httpclient.protocol.Protocol;
-import org.apache.commons.httpclient.protocol.ProtocolSocketFactory;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManager;
+import org.apache.commons.httpclient.contrib.ssl.EasyX509TrustManager;
+import org.apache.http.HttpResponse;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpRequestBase;
+import org.apache.http.conn.ssl.DefaultHostnameVerifier;
+import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
+import org.apache.http.impl.client.HttpClientBuilder;
+import org.apache.http.ssl.SSLContexts;
 import org.apache.log4j.Logger;
 
 import com.dbf.loadtester.HTTPAction;
@@ -20,26 +25,34 @@ public class LoadTestThread implements Runnable
 {
 	private static final Logger log = Logger.getLogger(LoadTestThread.class);
 	
-	private HttpClient httpClient;	
+	private static SSLConnectionSocketFactory sslFactory;
 	
-	private int threadNumber;
-	private PlayerConfiguration config;
+	private final HttpClient httpClient;	
 	
-	private Map<String, ActionTime> actionTimes = new HashMap<String, ActionTime>(100);
+	private final int threadNumber;
+	private final PlayerConfiguration config;
+	
+	private final Map<String, ActionTime> actionTimes = new HashMap<String, ActionTime>(100);
+	
+	static
+	{
+		try
+		{
+		SSLContext sslcontext = SSLContexts.custom().useProtocol("SSL").build();
+        sslcontext.init(null, new TrustManager[] {new EasyX509TrustManager(null)}, null);
+        sslFactory = new SSLConnectionSocketFactory(sslcontext, new DefaultHostnameVerifier());
+		}
+        catch (Throwable t)
+		{
+        	log.fatal("Fail to initialize SSL trust Manager.",t);
+		}
+	}
 	
 	public LoadTestThread(PlayerConfiguration config, int threadNumber)
 	{
 		this.config = config;
 		this.threadNumber = threadNumber;
-		initHTTPClient(config);
-	}
-	
-	private void initHTTPClient(PlayerConfiguration config)
-	{
-		//Allows us to ignore SSL Certificates. Great for testing!
-		Protocol easyhttps = new Protocol("https", (ProtocolSocketFactory)new EasySSLProtocolSocketFactory(), Integer.parseInt(config.getHttpsPort()));
-		Protocol.registerProtocol("https", easyhttps);
-		httpClient = new HttpClient();
+		httpClient = HttpClientBuilder.create().disableRedirectHandling().setSSLSocketFactory(sslFactory).build();
 	}
 	
 	@Override
@@ -74,7 +87,7 @@ public class LoadTestThread implements Runnable
 					Long duration =	runAction(action);
 					
 					if (null != duration)
-						recordActionTime(action.getServletPath(), duration);
+						recordActionTime(action.getPath(), duration);
 				}
 				runCount++;
 			}
@@ -134,19 +147,20 @@ public class LoadTestThread implements Runnable
 	
 	private Long runAction(HTTPAction action) throws Exception
 	{
-		HttpMethod method = HTTPActionConverter.convertHTTPAction(action, config.getHost(), config.getHttpPort(), config.getHttpsPort());
+		HttpRequestBase method = HTTPActionConverter.convertHTTPAction(action, config.getHost(), config.getHttpPort(), config.getHttpsPort());
 		
 		if(null == method)
 		{
-			log.error("Cannot execute action " + action.getServletPath() + ". Method " + action.getMethod() + " is not supported.");
+			log.error("Cannot execute action " + action.getPath() + ". Method " + action.getMethod() + " is not supported.");
 			return null;
 		}
 
 		long startTime = System.currentTimeMillis();
-		int statusCode = httpClient.executeMethod(method);
+		HttpResponse response = httpClient.execute(method);
 		long endTime = System.currentTimeMillis();
 		
-		log.info("Thread " + threadNumber + " recieved HTTP code " + statusCode + " for action " + action.getServletPath() + ".");
+		log.info("Thread " + threadNumber + " recieved HTTP code " + response.getStatusLine().getStatusCode() + " for action " + action.getPath() + ".");
+
 		return endTime - startTime;
 	}
 }

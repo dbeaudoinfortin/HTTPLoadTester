@@ -1,22 +1,25 @@
 package com.dbf.loadtester;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.Date;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Map;
 
 import org.apache.commons.codec.binary.Base64;
-import org.apache.commons.httpclient.HttpMethod;
-import org.apache.commons.httpclient.HttpMethodBase;
-import org.apache.commons.httpclient.methods.EntityEnclosingMethod;
-import org.apache.commons.httpclient.methods.GetMethod;
-import org.apache.commons.httpclient.methods.HeadMethod;
-import org.apache.commons.httpclient.methods.InputStreamRequestEntity;
-import org.apache.commons.httpclient.methods.PostMethod;
-import org.apache.commons.httpclient.methods.PutMethod;
-import org.apache.commons.httpclient.methods.RequestEntity;
+import org.apache.http.HttpEntity;
+import org.apache.http.client.methods.HttpDelete;
+import org.apache.http.client.methods.HttpEntityEnclosingRequestBase;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpHead;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.client.methods.HttpPut;
+import org.apache.http.client.methods.HttpRequestBase;
+import org.apache.http.client.utils.URIBuilder;
+import org.apache.http.entity.ByteArrayEntity;
+import org.apache.http.entity.ContentType;
 
 import com.dbf.loadtester.recorder.RecorderHttpServletRequestWrapper;
 
@@ -27,7 +30,7 @@ public class HTTPActionConverter
 		HTTPAction httpAction = new HTTPAction();
 		httpAction.setAbsoluteTime(currentDate);
 		httpAction.setTimePassed(timePassed);
-		httpAction.setServletPath(httpRequest.getServletPath());
+		httpAction.setPath(httpRequest.getServletPath());
 		httpAction.setMethod(httpRequest.getMethod());
 		httpAction.setCharacterEncoding(httpRequest.getCharacterEncoding());
 		httpAction.setContentLength(httpRequest.getContentLength());
@@ -49,29 +52,39 @@ public class HTTPActionConverter
 		return httpAction;
 	}
 	
-	public static HttpMethod convertHTTPAction(HTTPAction action, String host, String httpPort, String httpsPort)
+	public static HttpRequestBase convertHTTPAction(HTTPAction action, String host, int httpPort, int httpsPort) throws URISyntaxException
 	{
-		String url = action.getScheme() + "://" + host + ":" + (action.getScheme().equals("https") ? httpsPort : httpPort) + action.getServletPath();
+		URIBuilder uriBuilder = new URIBuilder();
+		uriBuilder.setScheme(action.getScheme());
+		uriBuilder.setHost(host);
+		uriBuilder.setPort(action.getScheme().equals("https") ? httpsPort : httpPort);
+		uriBuilder.setCustomQuery(action.getQueryString());
+		uriBuilder.setPath(action.getPath());
+		
+		URI uri = uriBuilder.build();
 		String actionMethod = action.getMethod().toUpperCase();
 		
 		boolean hasContent = false;
 		
-		HttpMethodBase httpMethod = null;
+		HttpRequestBase httpMethod = null;
 		switch(actionMethod)
 		{
 			case "POST":
-				httpMethod = new PostMethod(url);
+				httpMethod = new HttpPost(uri);
 				hasContent = true;
 				break;
 			case "PUT":
-				httpMethod = new PutMethod(url);
+				httpMethod = new HttpPut(uri);
 				hasContent = true;
 				break;
 			case "HEAD":
-				httpMethod = new HeadMethod(url);
+				httpMethod = new HttpHead(uri);
 				break;
 			case "GET":
-				httpMethod = new GetMethod(url);
+				httpMethod = new HttpGet(uri);
+				break;
+			case "DELETE":
+				httpMethod = new HttpDelete(uri);
 				break;
 			default:
 				return null;	
@@ -79,8 +92,9 @@ public class HTTPActionConverter
 		
 		if(hasContent)
 		{
-			RequestEntity requestEntity = new InputStreamRequestEntity(new ByteArrayInputStream(Base64.decodeBase64(action.getContent())), action.getContentType());
-			((EntityEnclosingMethod) httpMethod).setRequestEntity(requestEntity);
+			HttpEntity requestEntity = new ByteArrayEntity((Base64.decodeBase64(action.getContent())), ContentType.parse(action.getContentType()));
+			((HttpEntityEnclosingRequestBase) httpMethod).setEntity(requestEntity);
+			
 		}
 		
 		for (Map.Entry<String,String> entry : action.getHeaders().entrySet())
@@ -88,17 +102,14 @@ public class HTTPActionConverter
 			String headerName = entry.getKey();
 			if(headerName.equals("host"))
 			{
-				httpMethod.addRequestHeader(headerName, host);
+				httpMethod.addHeader(headerName, host);
 			}
 			else
 			{
-				httpMethod.addRequestHeader(headerName, entry.getValue());
+				httpMethod.addHeader(headerName, entry.getValue());
 			}
 		}
 		
-		httpMethod.setQueryString(action.getQueryString());
-		//httpMethod.setDoAuthentication(false);
-		httpMethod.setFollowRedirects(false);
 		return httpMethod;
 	}
 }

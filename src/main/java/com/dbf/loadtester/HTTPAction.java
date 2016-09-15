@@ -10,7 +10,7 @@ public class HTTPAction implements Serializable
 	
 	private Date absoluteTime;
 	private long timePassed;
-	private String servletPath;
+	private String path;
 	private String method;
 	private String characterEncoding;
 	private String content; 
@@ -32,14 +32,14 @@ public class HTTPAction implements Serializable
 		this.timePassed = timePassed;
 	}
 	
-	public String getServletPath()
+	public String getPath()
 	{
-		return servletPath;
+		return path;
 	}
 	
-	public void setServletPath(String servletPath)
+	public void setPath(String path)
 	{
-		this.servletPath = servletPath;
+		this.path = path;
 	}
 	
 	public String getMethod()
