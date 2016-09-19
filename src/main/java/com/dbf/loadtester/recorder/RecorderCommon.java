@@ -75,24 +75,34 @@ public class RecorderCommon
 	{
 		if (httpRequest.getParameter(PARAM_MAGIC_START) != null)
 		{
-			running = true;
-			createNewTestPlan();
+			startRecording();
 			return true;
 		}
 		else if(httpRequest.getParameter(PARAM_MAGIC_STOP) != null)
 		{
-			running = false;
-			closeTestPlan();
+			
 			return true;
 		}
 		return false;
+	}
+	
+	public void startRecording() throws IOException
+	{
+		running = true;
+		createNewTestPlan();
+	}
+	
+	public void stopRecording() throws IOException
+	{
+		running = false;
+		closeTestPlan();
 	}
 	
 	private void closeTestPlan() throws IOException
 	{
 		if (testPlanWriter != null)
 		{
-			log.info("Closing off test plan " + testPlanPath);
+			log.info("Closing off test plan: " + testPlanPath);
 			testPlanWriter.close();
 			testPlanWriter = null;
 		}
@@ -105,7 +115,7 @@ public class RecorderCommon
 			testPlanCount +=1;
 			previousTime = -1L;
 			testPlanPath = testPlanDirectory.resolve(testPlanPrefix + testPlanCount + ".json");
-			log.info("Creating new test plan" + testPlanPath);
+			log.info("Creating new test plan: " + testPlanPath);
 			testPlanWriter = new BufferedWriter(new FileWriter(testPlanPath.toFile(), true));
 		}
 	}

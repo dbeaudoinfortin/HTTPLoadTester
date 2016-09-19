@@ -36,6 +36,8 @@ public class RecorderProxy
 	
 	private static void initializeServer(RecorderProxyOptions options)
 	{
+		log.info("Attempting to start Recorder Proxy Server...");
+		
 		Undertow server = null;
 		try
 		{
@@ -50,6 +52,8 @@ public class RecorderProxy
 		}
 		
 		server.start();
+		
+		log.info("Recorder Proxy Server started.");
 	}
 	
 	private static HttpHandler buildHttpHandler(RecorderProxyOptions options) throws ServletException

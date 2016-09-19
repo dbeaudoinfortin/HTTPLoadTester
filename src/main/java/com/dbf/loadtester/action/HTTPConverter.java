@@ -30,7 +30,7 @@ public class HTTPConverter
 		HTTPAction httpAction = new HTTPAction();
 		httpAction.setAbsoluteTime(currentDate);
 		httpAction.setTimePassed(timePassed);
-		httpAction.setPath(httpRequest.getServletPath());
+		httpAction.setPath(httpRequest.getPathInfo());
 		httpAction.setMethod(httpRequest.getMethod());
 		httpAction.setCharacterEncoding(httpRequest.getCharacterEncoding());
 		httpAction.setContentLength(httpRequest.getContentLength());

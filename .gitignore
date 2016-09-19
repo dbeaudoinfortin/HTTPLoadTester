@@ -64,3 +64,4 @@
 .settings
 /.project
 /.classpath
+/dependency-reduced-pom.xml
