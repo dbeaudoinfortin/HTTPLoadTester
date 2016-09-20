@@ -12,7 +12,7 @@ import javax.management.ObjectName;
 import org.apache.http.client.HttpClient;
 import org.apache.log4j.Logger;
 
-import com.dbf.loadtester.httpclient.HTTPClientFactory;
+import com.dbf.loadtester.common.httpclient.HTTPClientFactory;
 import com.dbf.loadtester.player.config.Constants;
 import com.dbf.loadtester.player.config.PlayerConfiguration;
 import com.dbf.loadtester.player.jmx.PlayerManager;
@@ -50,6 +50,7 @@ public class LoadTestPlayer
 			else
 			{
 				//Wait for JMX (forever)
+				log.info("Initialization complete. Waiting for JMX to start.");
 				while(true) Thread.sleep(1000000);
 			}
 		}
@@ -113,7 +114,7 @@ public class LoadTestPlayer
 			 {
 				 try
 				{
-					HttpClient client = HTTPClientFactory.getHttpClient(config.getThreadCount());
+					HttpClient client = HTTPClientFactory.getHttpClient(config.getThreadCount() + 1);
 					
 					for (int i = 1; i < config.getThreadCount() + 1; i++)
 					{
@@ -127,18 +128,20 @@ public class LoadTestPlayer
 							thread.start();
 						}
 						
-						int staggerOffset = (int)(config.getStaggerTime() * Constants.MAX_STAGGER_OFFSET);
-						long stagger = (config.getStaggerTime() - staggerOffset) + random.nextInt((int)(staggerOffset*2));
-						
-						try
+						if(i != config.getThreadCount()) //Don't wait after the last thread is spun up
 						{
-							Thread.sleep(stagger < 0 ? 0 : stagger);
+    						int staggerOffset = (int)(config.getStaggerTime() * Constants.MAX_STAGGER_OFFSET);
+    						long stagger = (config.getStaggerTime() - staggerOffset) + random.nextInt((int)(staggerOffset*2));
+    						
+    						try
+    						{
+    							Thread.sleep(stagger < 0 ? 0 : stagger);
+    						}
+    						catch(InterruptedException e)
+    						{
+    							if(!running) return;
+    						}
 						}
-						catch(InterruptedException e)
-						{
-							if(!running) return;
-						}
-						
 					}
 					log.info("All threads launched.");
 				}
@@ -179,5 +182,18 @@ public class LoadTestPlayer
 	public static int getRunningThreadCount()
 	{
 		return workerThreads.size();
+	}
+	
+	public static void threadComplete(Thread thread)
+	{
+		synchronized(running)
+		{
+			workerThreads.remove(thread);
+			if(workerThreads.size() < 1)
+			{
+				log.info("All worker threads done.");
+				running = false;
+			}
+		}
 	}
 }

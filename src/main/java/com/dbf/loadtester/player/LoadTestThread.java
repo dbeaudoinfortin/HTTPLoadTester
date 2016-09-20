@@ -1,16 +1,20 @@
 package com.dbf.loadtester.player;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.log4j.Logger;
 
-import com.dbf.loadtester.action.HTTPAction;
-import com.dbf.loadtester.action.HTTPConverter;
+import com.dbf.loadtester.common.action.HTTPAction;
+import com.dbf.loadtester.common.action.HTTPConverter;
+import com.dbf.loadtester.common.util.Utils;
 import com.dbf.loadtester.player.config.PlayerConfiguration;
 import com.dbf.loadtester.player.stats.ActionTime;
 
@@ -18,18 +22,44 @@ public class LoadTestThread implements Runnable
 {
 	private static final Logger log = Logger.getLogger(LoadTestThread.class);
 	
-	private final HttpClient httpClient;	
+	private static final String THREAD_ID_PARAM = "<THREAD_ID>";
+	private static final Pattern THREAD_ID_PARAM_PATTERN = Pattern.compile(THREAD_ID_PARAM);
 	
+	private Map<Pattern, String> substitutions;
+	
+	private final HttpClient httpClient;	
 	private final int threadNumber;
-	private final PlayerConfiguration config;
+	private final int actionDelay;
+	private final boolean useSubstitutions;
+	private final long minRunTime;
+	private final String host;
+	private final int httpPort;
+	private final int httpsPort;
+	private final List<HTTPAction> actions;
 	
 	private final Map<String, ActionTime> actionTimes = new HashMap<String, ActionTime>(100);
 	
 	public LoadTestThread(PlayerConfiguration config, int threadNumber, HttpClient httpClient)
 	{
-		this.config = config;
 		this.threadNumber = threadNumber;
 		this.httpClient = httpClient;
+		this.actionDelay = config.getActionDelay();
+		this.useSubstitutions = config.isUseSubstitutions();
+		this.minRunTime = config.getMinRunTime();
+		this.host = config.getHost();
+		this.httpPort = config.getHttpPort();
+		this.httpsPort = config.getHttpsPort();
+				
+		//Apply substitutions during initialization for better performance
+		if(useSubstitutions)
+		{
+			initSubstitutions();
+			actions = applySubstitutions(config.getActions(), threadNumber);	
+		}
+		else
+		{
+			actions = config.getActions();
+		}
 	}
 	
 	@Override
@@ -43,12 +73,12 @@ public class LoadTestThread implements Runnable
 			do
 			{
 				long lastActionTime = System.currentTimeMillis();
-				for(HTTPAction action : config.getActions())
+				for(HTTPAction action : actions)
 				{
 					if(!LoadTestPlayer.isRunning()) return;
 					
 					//By-pass Test Plan timings for debug purposes
-					long waitTime = (config.getActionDelay() < 0 ? action.getTimePassed() : config.getActionDelay());
+					long waitTime = (actionDelay < 0 ? action.getTimePassed() : actionDelay);
 					
 					//Ensure that the start time of every action matches the timings in the test plan
 					long currentTime = System.currentTimeMillis();
@@ -71,7 +101,7 @@ public class LoadTestThread implements Runnable
 				}
 				runCount++;
 			}
-			while((new Date()).getTime() - startTime < config.getMinRunTime());
+			while((new Date()).getTime() - startTime < minRunTime);
 			
 			long endTime = System.currentTimeMillis();
 			double timeInMinutes = (endTime - startTime)/60000.0;
@@ -86,6 +116,10 @@ public class LoadTestThread implements Runnable
 		catch(Exception e)
 		{
 			log.error("Thread " + threadNumber + " failed.", e);
+		}
+		finally
+		{
+			LoadTestPlayer.threadComplete(Thread.currentThread());
 		}
 	}
 	
@@ -131,7 +165,8 @@ public class LoadTestThread implements Runnable
 	
 	private Long runAction(HTTPAction action) throws Exception
 	{
-		HttpRequestBase method = HTTPConverter.convertHTTPActionToHTTPClientRequest(action, config.getHost(), config.getHttpPort(), config.getHttpsPort());
+		
+		HttpRequestBase method = HTTPConverter.convertHTTPActionToHTTPClientRequest(action, host, httpPort, httpsPort);
 		
 		if(null == method)
 		{
@@ -139,12 +174,57 @@ public class LoadTestThread implements Runnable
 			return null;
 		}
 
-		long startTime = System.currentTimeMillis();
-		HttpResponse response = httpClient.execute(method);
-		long endTime = System.currentTimeMillis();
+		long startTime;
+		long endTime;
+		HttpResponse response = null;
+		try
+		{
+    		startTime = System.currentTimeMillis();
+    		response = httpClient.execute(method);
+    		endTime = System.currentTimeMillis();
+		}
+    	finally
+		{
+    		method.releaseConnection();
+		}
 		
 		log.info("Thread " + threadNumber + " recieved HTTP code " + response.getStatusLine().getStatusCode() + " for action " + action.getPath() + ".");
 
 		return endTime - startTime;
+	}
+	
+	private void initSubstitutions()
+	{
+		//These are built-in replacement string
+		//These are calculated ahead of time for better performance
+		//Currently there is only Thread Number, more will be added later
+		substitutions = new HashMap<Pattern, String>();
+		substitutions.put(THREAD_ID_PARAM_PATTERN, "" + threadNumber);
+	}
+	
+	private List<HTTPAction> applySubstitutions(List<HTTPAction> actions, int threadNumber)
+	{
+		//Must do a deep copy because every thread will have different values for request path, query and body
+		List<HTTPAction> returnList = new ArrayList<HTTPAction>(actions.size());
+		for(HTTPAction source : actions)
+		{
+			HTTPAction actionCopy = new HTTPAction(source);
+			returnList.add(actionCopy);
+			
+			if(actionCopy.getPath() != null)
+				actionCopy.setPath(Utils.applyRegexSubstitutions(actionCopy.getPath(), substitutions));
+			
+			if(actionCopy.getQueryString() != null)
+				actionCopy.setQueryString(Utils.applyRegexSubstitutions(actionCopy.getQueryString(), substitutions));
+			
+			//Body only applies to post and put
+			if(actionCopy.getContent() != null && ("PUT".equals(actionCopy.getMethod()) || "POST".equals(actionCopy.getMethod())))
+			{
+				String content = Utils.applyRegexSubstitutions(actionCopy.getContent(), substitutions);
+				actionCopy.setContent(content);
+				actionCopy.setContentLength(content.length());
+			}
+		}
+		return returnList;
 	}
 }

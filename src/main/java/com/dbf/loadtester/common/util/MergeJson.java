@@ -1,4 +1,4 @@
-package com.dbf.loadtester.util;
+package com.dbf.loadtester.common.util;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -10,8 +10,8 @@ import java.util.List;
 
 import org.apache.log4j.Logger;
 
-import com.dbf.loadtester.action.HTTPAction;
-import com.dbf.loadtester.json.JsonEncoder;
+import com.dbf.loadtester.common.action.HTTPAction;
+import com.dbf.loadtester.common.json.JsonEncoder;
 
 /**
  * 

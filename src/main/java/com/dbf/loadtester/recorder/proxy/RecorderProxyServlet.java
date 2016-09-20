@@ -18,8 +18,8 @@ import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.log4j.Logger;
 
-import com.dbf.loadtester.action.HTTPConverter;
-import com.dbf.loadtester.httpclient.HTTPClientFactory;
+import com.dbf.loadtester.common.action.HTTPConverter;
+import com.dbf.loadtester.common.httpclient.HTTPClientFactory;
 import com.dbf.loadtester.recorder.RecorderHttpServletRequestWrapper;
 
 public class RecorderProxyServlet implements Servlet
@@ -59,9 +59,10 @@ public class RecorderProxyServlet implements Servlet
 		RecorderHttpServletRequestWrapper wrappedRequest = (RecorderHttpServletRequestWrapper) servletRequest;
 		
 		//Proxy the request forward
+		HttpRequestBase httpMethod = null;
 		try
 		{
-			HttpRequestBase httpMethod = HTTPConverter.convertServletRequestToHTTPClientRequest(wrappedRequest, host, httpPort, httpsPort);
+			httpMethod = HTTPConverter.convertServletRequestToHTTPClientRequest(wrappedRequest, host, httpPort, httpsPort);
 			HttpResponse response = httpClient.execute(httpMethod);
 			convertResponse(response, (HttpServletResponse) servletResponse);
 		}
@@ -69,6 +70,10 @@ public class RecorderProxyServlet implements Servlet
 		{
 			log.error("Failed to proxy request.", e);
 			throw new ServletException("Failed to proxy request.", e);
+		}
+		finally
+		{
+			if(null != httpMethod) httpMethod.releaseConnection();
 		}
 	}
 	
@@ -82,8 +87,11 @@ public class RecorderProxyServlet implements Servlet
 		httpServletResponse.setStatus(response.getStatusLine().getStatusCode());
 		
 		HttpEntity entity = response.getEntity();
-		httpServletResponse.setContentLengthLong(entity.getContentLength());
-		IOUtils.copy(entity.getContent(), httpServletResponse.getOutputStream());
+		if(entity != null)
+		{
+			httpServletResponse.setContentLengthLong(entity.getContentLength());
+			IOUtils.copy(entity.getContent(), httpServletResponse.getOutputStream());
+		}
 	}
 	
 	@Override

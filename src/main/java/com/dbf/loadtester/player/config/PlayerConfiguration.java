@@ -6,8 +6,8 @@ import java.util.List;
 
 import org.apache.log4j.Logger;
 
-import com.dbf.loadtester.action.HTTPAction;
-import com.dbf.loadtester.json.JsonEncoder;
+import com.dbf.loadtester.common.action.HTTPAction;
+import com.dbf.loadtester.common.json.JsonEncoder;
 
 public class PlayerConfiguration
 {
@@ -19,7 +19,7 @@ public class PlayerConfiguration
 	private int threadCount = Constants.DEFAULT_THREAD_COUNT;
 	private long staggerTime = Constants.DEFAULT_STAGGER_TIME;
 	private int actionDelay = Constants.DEFAULT_TIME_BETWEEN_ACTIONS;
-	
+	private boolean useSubstitutions = false;
 	private long minRunTime = -1;
 	private File testPlanFile;
 	private List<HTTPAction> actions;
@@ -234,5 +234,15 @@ public class PlayerConfiguration
 	public void setActionDelay(int actionDelay)
 	{
 		this.actionDelay = actionDelay;
+	}
+
+	public boolean isUseSubstitutions()
+	{
+		return useSubstitutions;
+}
+
+	public void setUseSubstitutions(boolean useSubstitutions)
+	{
+		this.useSubstitutions = useSubstitutions;
 	}
 }

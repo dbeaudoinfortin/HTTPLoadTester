@@ -1,4 +1,4 @@
-package com.dbf.loadtester.json;
+package com.dbf.loadtester.common.json;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -9,15 +9,17 @@ import java.util.List;
 
 import org.apache.log4j.Logger;
 
-import com.dbf.loadtester.action.HTTPAction;
+import com.dbf.loadtester.common.action.HTTPAction;
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonSyntaxException;
 
 public class JsonEncoder
 {
 	private static final Logger log = Logger.getLogger(JsonEncoder.class);
 	
-	private static final Gson gson = new Gson();
-	
+	private static final Gson gson = new GsonBuilder().setDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ").create();
+
 	public static List<HTTPAction> loadTestPlan(File testPlan) throws IOException
 	{
 		List<HTTPAction> actions = new LinkedList<HTTPAction>();
@@ -41,8 +43,21 @@ public class JsonEncoder
 		return actions;
 	}
 	
-	public static String toJson(HTTPAction action)
+	public static String toJson(Object o)
 	{
-		return gson.toJson(action);
+		return gson.toJson(o);
+	}
+	
+	public static <T> T fromJson(String json, Class<T> classOfT)
+	{
+		try
+		{
+			return gson.fromJson(json, classOfT);
+		}
+		catch(JsonSyntaxException e)
+		{
+			log.warn("JSON conversion failed.");
+			return null;
+		}
 	}
 }

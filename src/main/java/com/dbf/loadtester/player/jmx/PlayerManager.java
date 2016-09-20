@@ -154,6 +154,19 @@ public class PlayerManager implements PlayerManagerMBean
 		if(isRunning()) throw new RuntimeException("Can't modify configuration while running.");
 		config.setActionDelay(actionDelay);	
 	}
+	
+	@Override
+	public boolean isUseSubstitutions()
+	{
+		return config.isUseSubstitutions();
+	}
+	
+	@Override
+	public void setUseSubstitutions(boolean useSubstitutions)
+	{
+		if(isRunning()) throw new RuntimeException("Can't modify configuration while running.");
+		config.setUseSubstitutions(useSubstitutions);;	
+	}
 
 	@Override
 	public String toString()

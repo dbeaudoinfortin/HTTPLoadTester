@@ -1,4 +1,4 @@
-package com.dbf.loadtester.httpclient;
+package com.dbf.loadtester.common.httpclient;
 
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;

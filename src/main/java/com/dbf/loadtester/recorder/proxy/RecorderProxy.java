@@ -69,9 +69,10 @@ public class RecorderProxy
                         .addInitParam(RecorderProxyServlet.PARAM_PROXY_HOST, options.getForwardHost())
                         .addMapping("/*")
                 )
-                .addFilter(Servlets.filter("recorderServletFilter", RecorderServletFilter.class))
-                .addInitParameter(RecorderServletFilter.PARAM_DIRECTORY_PATH, options.getDirectory())
-                .addFilterUrlMapping("recorderServletFilter", "/*", DispatcherType.REQUEST);
+                .addFilter(Servlets.filter("recorderServletFilter", RecorderServletFilter.class)
+                		.addInitParam(RecorderServletFilter.PARAM_DIRECTORY_PATH, options.getDirectory()))
+                .addFilterUrlMapping("recorderServletFilter", "/*", DispatcherType.REQUEST)
+                .setEagerFilterInit(true);
 
         DeploymentManager deploymentManager =  Servlets.defaultContainer().addDeployment(servletBuilder);
         deploymentManager.deploy();

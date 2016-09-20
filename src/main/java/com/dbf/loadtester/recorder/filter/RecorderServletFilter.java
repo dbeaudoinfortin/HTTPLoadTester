@@ -3,7 +3,6 @@ package com.dbf.loadtester.recorder.filter;
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
 import java.nio.file.Paths;
-
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
 import javax.servlet.Filter;
@@ -16,9 +15,9 @@ import javax.servlet.http.HttpServletRequest;
 
 import org.apache.log4j.Logger;
 
-import com.dbf.loadtester.jmx.recorder.RecorderManagerMBean;
-import com.dbf.loadtester.jmx.recorder.RecorderManager;
 import com.dbf.loadtester.recorder.RecorderCommon;
+import com.dbf.loadtester.recorder.jmx.RecorderManager;
+import com.dbf.loadtester.recorder.jmx.RecorderManagerMBean;
 
 /**
  * Servlet Filter version of the recorder.

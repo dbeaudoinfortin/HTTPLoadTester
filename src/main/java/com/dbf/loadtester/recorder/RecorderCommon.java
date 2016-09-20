@@ -7,17 +7,21 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Random;
+import java.util.regex.Pattern;
 
 import javax.servlet.ServletRequest;
 import javax.servlet.http.HttpServletRequest;
 
 import org.apache.log4j.Logger;
 
-import com.dbf.loadtester.action.HTTPAction;
-import com.dbf.loadtester.action.HTTPConverter;
-import com.dbf.loadtester.json.JsonEncoder;
-import com.dbf.loadtester.util.Utils;
+import com.dbf.loadtester.common.action.HTTPAction;
+import com.dbf.loadtester.common.action.HTTPConverter;
+import com.dbf.loadtester.common.json.JsonEncoder;
+import com.dbf.loadtester.common.util.Utils;
 
 /**
  * Records incoming HTTP requests and saves them to disk
@@ -39,10 +43,15 @@ public class RecorderCommon
 	private boolean running = false;
 	
 	private final String testPlanPrefix = getTestPlanFileNamePrefix();
+	
 	private Path testPlanDirectory = Paths.get(DEFAULT_DIRECTORY_PATH);
 	private int  testPlanCount = 0;
 	private Path testPlanPath = null;
 	private BufferedWriter testPlanWriter = null;
+	
+	private Map<Pattern, String> pathSubs = new HashMap<Pattern, String>();
+	private Map<Pattern, String> bodySubs = new HashMap<Pattern, String>();
+	private Map<Pattern, String> querySubs = new HashMap<Pattern, String>();
 	
 	public ServletRequest handleHTTPRequest(HttpServletRequest httpRequest)
 	{
@@ -56,7 +65,11 @@ public class RecorderCommon
 		
 			long timePassed = (previousTime < 0 ? 0 : currentDate.getTime() - previousTime);
 			previousTime = currentDate.getTime() ;
-	      	saveHTTPAction(HTTPConverter.convertServletRequestToHTTPAction(httpRequestWrapper, currentDate, timePassed));
+			
+			HTTPAction httpAction = HTTPConverter.convertServletRequestToHTTPAction(httpRequestWrapper, currentDate, timePassed);
+			applySubstitutions(httpAction);
+	      	saveHTTPAction(httpAction);
+	      	
 	      	return httpRequestWrapper;
 		}
 		catch(Exception e)
@@ -66,6 +79,23 @@ public class RecorderCommon
 		
 		return httpRequest;
 	}
+	
+	private void applySubstitutions(HTTPAction httpAction)
+	{
+		if(pathSubs.size() > 0 && httpAction.getPath() != null)
+			httpAction.setPath(Utils.applyRegexSubstitutions(httpAction.getPath(), pathSubs));
+		
+		if(querySubs.size() > 0 && httpAction.getQueryString() != null)
+    		httpAction.setQueryString(Utils.applyRegexSubstitutions(httpAction.getQueryString(), querySubs));
+		
+		//Request Body only applies to PUT and POST 
+		if(bodySubs.size() > 0 && httpAction.getContent() != null && ("PUT".equals(httpAction.getMethod()) || "POST".equals(httpAction.getMethod())))
+		{
+			String content = Utils.applyRegexSubstitutions(httpAction.getContent(), bodySubs);
+			httpAction.setContent(content);
+			httpAction.setContentLength(content.length());
+		}
+	}	
 	
 	/**
 	 * Handles various control params. Returns true if any param was found.
@@ -80,19 +110,19 @@ public class RecorderCommon
 		}
 		else if(httpRequest.getParameter(PARAM_MAGIC_STOP) != null)
 		{
-			
+			stopRecording();
 			return true;
 		}
 		return false;
 	}
 	
-	public void startRecording() throws IOException
+	public synchronized void startRecording() throws IOException
 	{
 		running = true;
 		createNewTestPlan();
 	}
 	
-	public void stopRecording() throws IOException
+	public synchronized void stopRecording() throws IOException
 	{
 		running = false;
 		closeTestPlan();
@@ -105,6 +135,7 @@ public class RecorderCommon
 			log.info("Closing off test plan: " + testPlanPath);
 			testPlanWriter.close();
 			testPlanWriter = null;
+			testPlanPath = null;
 		}
 	}
 	
@@ -114,7 +145,9 @@ public class RecorderCommon
 		{
 			testPlanCount +=1;
 			previousTime = -1L;
-			testPlanPath = testPlanDirectory.resolve(testPlanPrefix + testPlanCount + ".json");
+			
+			if(null == testPlanPath) testPlanPath = testPlanDirectory.resolve(testPlanPrefix + testPlanCount + ".json");
+			
 			log.info("Creating new test plan: " + testPlanPath);
 			testPlanWriter = new BufferedWriter(new FileWriter(testPlanPath.toFile(), true));
 		}
@@ -124,6 +157,7 @@ public class RecorderCommon
 	{
 		if(null != testPlanWriter)
 		{
+			log.info("Recording Action: " + action.getMethod() + " " + action.getPath() + (action.getQueryString() == null ? "" : action.getQueryString()));
 			testPlanWriter.write(JsonEncoder.toJson(action));
 			testPlanWriter.newLine();
 			testPlanWriter.flush();
@@ -136,7 +170,28 @@ public class RecorderCommon
 				+ (new SimpleDateFormat("yyyy-MM-dd")).format(new Date())
 				+ "-" + (new Random()).nextInt(Integer.MAX_VALUE) + "-";
 	}
-
+	
+	private Map<Pattern, String> convertToSubstitutionMap(Map<String, String> map) 
+	{
+		Map<Pattern, String> returnMap = new HashMap<Pattern, String>();
+		for(Entry<String, String> entry : map.entrySet())
+		{
+			//Because of runtime type-erasure during Json conversion, we need the toString().
+			returnMap.put(Pattern.compile(entry.getKey()), entry.getValue().toString());
+		}
+		return returnMap;
+	}
+	
+	private Map<String, String> convertFromSubstitutionMap(Map<Pattern, String> map) 
+	{
+		Map<String, String> returnMap = new HashMap<String, String>();
+		for(Entry<Pattern, String> entry : map.entrySet())
+		{
+			returnMap.put(entry.getKey().pattern(), entry.getValue());
+		}
+		return returnMap;
+	}
+	
 	public Path getTestPlanDirectory() {
 		return testPlanDirectory;
 	}
@@ -147,5 +202,45 @@ public class RecorderCommon
 
 	public boolean isRunning() {
 		return running;
+	}
+
+	public Path getTestPlanPath()
+	{
+		return testPlanPath;
+	}
+
+	public void setTestPlanPath(Path testPlanPath)
+	{
+		this.testPlanPath = testPlanPath;
+	}
+	
+	public Map<String, String> getPathSubs()
+	{
+		return convertFromSubstitutionMap(pathSubs);
+	}
+
+	public void setPathSubs(Map<String, String> pathSubs)
+	{
+		this.pathSubs = convertToSubstitutionMap(pathSubs);
+	}
+
+	public Map<String, String> getBodySubs()
+	{
+		return convertFromSubstitutionMap(bodySubs);
+	}
+
+	public void setBodySubs(Map<String, String> bodySubs)
+	{
+		this.bodySubs = convertToSubstitutionMap(bodySubs);
+	}
+
+	public Map<String, String> getQuerySubs()
+	{
+		return convertFromSubstitutionMap(querySubs);
+	}
+
+	public void setQuerySubs(Map<String, String> querySubs)
+	{
+		this.querySubs = convertToSubstitutionMap(querySubs);
 	}
 }

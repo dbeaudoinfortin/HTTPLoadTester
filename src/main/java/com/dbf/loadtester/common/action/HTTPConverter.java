@@ -1,4 +1,4 @@
-package com.dbf.loadtester.action;
+package com.dbf.loadtester.common.action;
 
 import java.io.IOException;
 import java.net.URI;
@@ -8,7 +8,6 @@ import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.apache.commons.codec.binary.Base64;
 import org.apache.http.HttpEntity;
 import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpEntityEnclosingRequestBase;
@@ -30,21 +29,23 @@ public class HTTPConverter
 		HTTPAction httpAction = new HTTPAction();
 		httpAction.setAbsoluteTime(currentDate);
 		httpAction.setTimePassed(timePassed);
-		httpAction.setPath(httpRequest.getPathInfo());
 		httpAction.setMethod(httpRequest.getMethod());
 		httpAction.setCharacterEncoding(httpRequest.getCharacterEncoding());
-		httpAction.setContentLength(httpRequest.getContentLength());
+		
 		httpAction.setContentType(httpRequest.getContentType());
 		httpAction.setQueryString(httpRequest.getQueryString());
 		httpAction.setHeaders(extractHeaders(httpRequest));
 		httpAction.setScheme(httpRequest.getScheme());
-		httpAction.setContent(Base64.encodeBase64String(httpRequest.getRequestBody()));
+		httpAction.setPath(httpRequest.getPathInfo());
+		httpAction.setContent(new String(httpRequest.getRequestBody()));
+		httpAction.setContentLength(httpRequest.getContentLength());
+		
 		return httpAction;
 	}
 	
 	public static HttpRequestBase convertHTTPActionToHTTPClientRequest(HTTPAction action, String host, int httpPort, int httpsPort) throws URISyntaxException
 	{
-		return buildHTTPClientRequest(action.getScheme(), host, httpPort, httpsPort, action.getQueryString(), action.getPath(), action.getMethod(), action.getHeaders(), Base64.decodeBase64(action.getContent()), action.getContentType());
+		return buildHTTPClientRequest(action.getScheme(), host, httpPort, httpsPort, action.getQueryString(), action.getPath(), action.getMethod(), action.getHeaders(), action.getContent().getBytes(), action.getContentType());
 	}
 	
 	public static HttpRequestBase convertServletRequestToHTTPClientRequest(RecorderHttpServletRequestWrapper httpRequest, String host, int httpPort, int httpsPort) throws URISyntaxException
@@ -111,6 +112,10 @@ public class HTTPConverter
 			if(headerName.equals("host"))
 			{
 				httpMethod.addHeader(headerName, host);
+			}
+			else if(hasContent && (headerName.equals("Content-Length") ||headerName.equals("Content-Type")))
+			{
+				continue;  //already set by the setEntity() method above.
 			}
 			else
 			{

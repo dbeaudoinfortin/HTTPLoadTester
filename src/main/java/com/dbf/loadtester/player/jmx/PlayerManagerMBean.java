@@ -42,4 +42,8 @@ public interface PlayerManagerMBean
 
 	public void setActionDelay(int actionDelay);
 	
+	public boolean isUseSubstitutions();
+
+	public void setUseSubstitutions(boolean useSubstitutions);
+	
 }
