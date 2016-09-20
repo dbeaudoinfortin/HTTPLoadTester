@@ -44,7 +44,9 @@ public class LoadTestThread implements Runnable
 			{
 				long lastActionTime = System.currentTimeMillis();
 				for(HTTPAction action : config.getActions())
-				{					
+				{
+					if(!LoadTestPlayer.isRunning()) return;
+					
 					//By-pass Test Plan timings for debug purposes
 					long waitTime = (config.getActionDelay() < 0 ? action.getTimePassed() : config.getActionDelay());
 					
@@ -52,6 +54,7 @@ public class LoadTestThread implements Runnable
 					long currentTime = System.currentTimeMillis();
 					while(currentTime - lastActionTime < waitTime)
 					{
+						if(!LoadTestPlayer.isRunning()) return;
 						Thread.sleep(10);
 						currentTime = System.currentTimeMillis();
 					}
@@ -75,6 +78,10 @@ public class LoadTestThread implements Runnable
 			
  			log.info("Thread " + threadNumber + " completed " + runCount + " run" + (runCount > 1 ? "s" : "") + " of the test plan in " + timeInMinutes + " minutes, including pauses." + (runCount > 1 ? " Average time " + timeInMinutes/runCount + " minutes, including pauses." : ""));
  			printActionTimes();
+		}
+		catch(InterruptedException e)
+		{
+			//Thread externally halted
 		}
 		catch(Exception e)
 		{

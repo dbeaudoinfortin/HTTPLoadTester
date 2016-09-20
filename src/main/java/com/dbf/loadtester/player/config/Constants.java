@@ -8,12 +8,6 @@ public class Constants
 	public static final int  	DEFAULT_HTTP_PORT = 10080;
 	public static final int  	DEFAULT_HTTPS_PORT = 10443;
 	
-	/*
-	public static final String  DEFAULT_HOST = "qa-prov1";
-	public static final int  	DEFAULT_HTTP_PORT = 8083;
-	public static final int  	DEFAULT_HTTPS_PORT = 8011;
-	*/
-	
 	//THREADS
 	public static final long    DEFAULT_STAGGER_TIME = 5000;
 	public static final Double  MAX_STAGGER_OFFSET = 0.75; 
