@@ -187,8 +187,9 @@ public class LoadTestPlayer
 	public static void threadComplete(Thread thread)
 	{
 		synchronized(running)
-		{
+		{		
 			workerThreads.remove(thread);
+			if(!running) return;
 			if(workerThreads.size() < 1)
 			{
 				log.info("All worker threads done.");

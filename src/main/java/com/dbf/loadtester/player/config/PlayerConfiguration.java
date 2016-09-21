@@ -22,6 +22,7 @@ public class PlayerConfiguration
 	private boolean useSubstitutions = false;
 	private long minRunTime = -1;
 	private File testPlanFile;
+	private boolean overrideHttps = false;
 	private List<HTTPAction> actions;
 
 	public PlayerConfiguration(){}
@@ -244,5 +245,15 @@ public class PlayerConfiguration
 	public void setUseSubstitutions(boolean useSubstitutions)
 	{
 		this.useSubstitutions = useSubstitutions;
+	}
+
+	public boolean isOverrideHttps()
+	{
+		return overrideHttps;
+	}
+
+	public void setOverrideHttps(boolean overrideHttps)
+	{
+		this.overrideHttps = overrideHttps;
 	}
 }

@@ -132,7 +132,7 @@ public class PlayerManager implements PlayerManagerMBean
 	@Override
 	public int getHttpsPort()
 	{
-		return config.getHttpPort();
+		return config.getHttpsPort();
 	}
 
 	@Override
@@ -168,6 +168,18 @@ public class PlayerManager implements PlayerManagerMBean
 		config.setUseSubstitutions(useSubstitutions);;	
 	}
 
+	@Override
+	public boolean isOverrideHttps()
+	{
+		return config.isOverrideHttps();
+	}
+
+	@Override
+	public void setOverrideHttps(boolean overrideHttps)
+	{
+		config.setOverrideHttps(overrideHttps);;
+	}
+	
 	@Override
 	public String toString()
 	{

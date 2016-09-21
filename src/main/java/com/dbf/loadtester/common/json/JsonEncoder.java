@@ -29,8 +29,13 @@ public class JsonEncoder
 			reader = new BufferedReader (new FileReader(testPlan));
 			String line;
 	
+			int i = 1;
 			while ((line = reader.readLine()) != null)
-				actions.add(gson.fromJson(line, HTTPAction.class));
+			{
+				HTTPAction action = gson.fromJson(line, HTTPAction.class);
+				action.setId(i++);
+				actions.add(action);
+			}
 		}
 		catch(Exception e)
 		{

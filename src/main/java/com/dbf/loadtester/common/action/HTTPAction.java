@@ -8,6 +8,7 @@ public class HTTPAction implements Serializable
 {
 	private static final long serialVersionUID = 1L;
 	
+	private transient int id;
 	private Date absoluteTime;
 	private long timePassed;
 	private String path;
@@ -24,6 +25,7 @@ public class HTTPAction implements Serializable
 	
 	public HTTPAction(HTTPAction other)
 	{
+		this.id = other.id;
 		this.absoluteTime = other.absoluteTime;
 		this.timePassed = other.timePassed;
 		this.path = other.path;
@@ -139,6 +141,16 @@ public class HTTPAction implements Serializable
 
 	public void setScheme(String scheme) {
 		this.scheme = scheme;
+	}
+
+	public int getId()
+	{
+		return id;
+	}
+
+	public void setId(int id)
+	{
+		this.id = id;
 	}
 	
 }

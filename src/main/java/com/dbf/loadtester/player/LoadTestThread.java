@@ -35,6 +35,7 @@ public class LoadTestThread implements Runnable
 	private final String host;
 	private final int httpPort;
 	private final int httpsPort;
+	private final boolean overrideHttps;
 	private final List<HTTPAction> actions;
 	
 	private final Map<String, ActionTime> actionTimes = new HashMap<String, ActionTime>(100);
@@ -49,6 +50,7 @@ public class LoadTestThread implements Runnable
 		this.host = config.getHost();
 		this.httpPort = config.getHttpPort();
 		this.httpsPort = config.getHttpsPort();
+		this.overrideHttps = config.isOverrideHttps();
 				
 		//Apply substitutions during initialization for better performance
 		if(useSubstitutions)
@@ -165,6 +167,7 @@ public class LoadTestThread implements Runnable
 	
 	private Long runAction(HTTPAction action) throws Exception
 	{
+		if(overrideHttps) action.setScheme("https");
 		
 		HttpRequestBase method = HTTPConverter.convertHTTPActionToHTTPClientRequest(action, host, httpPort, httpsPort);
 		
@@ -188,7 +191,7 @@ public class LoadTestThread implements Runnable
     		method.releaseConnection();
 		}
 		
-		log.info("Thread " + threadNumber + " recieved HTTP code " + response.getStatusLine().getStatusCode() + " for action " + action.getPath() + ".");
+		log.info("Thread " + threadNumber + " recieved HTTP code " + response.getStatusLine().getStatusCode() + " for action " + action.getId() + " " + action.getMethod() + " " + action.getPath() + (action.getQueryString() == null ? "" : action.getQueryString()) + ".");
 
 		return endTime - startTime;
 	}

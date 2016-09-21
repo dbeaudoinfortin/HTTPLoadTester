@@ -46,4 +46,8 @@ public interface PlayerManagerMBean
 
 	public void setUseSubstitutions(boolean useSubstitutions);
 	
+	public boolean isOverrideHttps();
+
+	public void setOverrideHttps(boolean overrideHttps);
+	
 }
