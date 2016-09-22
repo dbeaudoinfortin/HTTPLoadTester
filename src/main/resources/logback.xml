@@ -1,11 +1,17 @@
 <configuration>
 	<appender name="stdout" class="ch.qos.logback.core.ConsoleAppender">
 		<encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
-			<pattern>%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{0} :%M %L - %msg%n</pattern>
+			<pattern>%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level - %msg%n</pattern>
 		</encoder>
 	</appender>
-
+	
+	<!-- Use an ASYNC appender so that the console appender doesn't limit performance
+		 This is setup to loose events if the console backs-up -->
+	<appender name="ASYNC" class="ch.qos.logback.classic.AsyncAppender" queueSize="100" neverBlock="true">
+    	<appender-ref ref="stdout" />
+  	</appender>
+  
 	<root level="INFO">
-	   <appender-ref ref="stdout" />
+	   <appender-ref ref="ASYNC" />
 	</root>
 </configuration>

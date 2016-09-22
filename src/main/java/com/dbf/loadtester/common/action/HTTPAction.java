@@ -4,6 +4,8 @@ import java.io.Serializable;
 import java.util.Date;
 import java.util.Map;
 
+import org.apache.http.client.methods.HttpRequestBase;
+
 public class HTTPAction implements Serializable
 {
 	private static final long serialVersionUID = 1L;
@@ -20,6 +22,7 @@ public class HTTPAction implements Serializable
 	private String scheme;
 	private String queryString;
 	private Map<String, String> headers;
+	private transient HttpRequestBase httpRequest;
 	
 	public HTTPAction(){}
 	
@@ -151,6 +154,16 @@ public class HTTPAction implements Serializable
 	public void setId(int id)
 	{
 		this.id = id;
+	}
+
+	public HttpRequestBase getHttpRequest()
+	{
+		return httpRequest;
+	}
+
+	public void setHttpRequest(HttpRequestBase httpRequest)
+	{
+		this.httpRequest = httpRequest;
 	}
 	
 }

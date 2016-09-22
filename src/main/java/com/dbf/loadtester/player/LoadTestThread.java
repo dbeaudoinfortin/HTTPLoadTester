@@ -1,5 +1,6 @@
 package com.dbf.loadtester.player;
 
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -9,7 +10,6 @@ import java.util.regex.Pattern;
 
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.log4j.Logger;
 
 import com.dbf.loadtester.common.action.HTTPAction;
@@ -51,17 +51,7 @@ public class LoadTestThread implements Runnable
 		this.httpPort = config.getHttpPort();
 		this.httpsPort = config.getHttpsPort();
 		this.overrideHttps = config.isOverrideHttps();
-				
-		//Apply substitutions during initialization for better performance
-		if(useSubstitutions)
-		{
-			initSubstitutions();
-			actions = applySubstitutions(config.getActions(), threadNumber);	
-		}
-		else
-		{
-			actions = config.getActions();
-		}
+		this.actions = initializeHTTPActions(config.getActions(), threadNumber);	
 	}
 	
 	@Override
@@ -167,11 +157,7 @@ public class LoadTestThread implements Runnable
 	
 	private Long runAction(HTTPAction action) throws Exception
 	{
-		if(overrideHttps) action.setScheme("https");
-		
-		HttpRequestBase method = HTTPConverter.convertHTTPActionToHTTPClientRequest(action, host, httpPort, httpsPort);
-		
-		if(null == method)
+		if(null == action.getHttpRequest())
 		{
 			log.error("Cannot execute action " + action.getPath() + ". Method " + action.getMethod() + " is not supported.");
 			return null;
@@ -183,16 +169,16 @@ public class LoadTestThread implements Runnable
 		try
 		{
     		startTime = System.currentTimeMillis();
-    		response = httpClient.execute(method);
+    		response = httpClient.execute(action.getHttpRequest());
     		endTime = System.currentTimeMillis();
 		}
     	finally
 		{
-    		method.releaseConnection();
+    		//Release connection and makes it reusable
+    		action.getHttpRequest().reset();
 		}
 		
 		log.info("Thread " + threadNumber + " recieved HTTP code " + response.getStatusLine().getStatusCode() + " for action " + action.getId() + " " + action.getMethod() + " " + action.getPath() + (action.getQueryString() == null ? "" : action.getQueryString()) + ".");
-
 		return endTime - startTime;
 	}
 	
@@ -205,29 +191,51 @@ public class LoadTestThread implements Runnable
 		substitutions.put(THREAD_ID_PARAM_PATTERN, "" + threadNumber);
 	}
 	
-	private List<HTTPAction> applySubstitutions(List<HTTPAction> actions, int threadNumber)
+	private List<HTTPAction> initializeHTTPActions(List<HTTPAction> actions, int threadNumber)
 	{
+		//Apply substitutions during initialization for better performance
+		if(useSubstitutions) initSubstitutions();
+					
 		//Must do a deep copy because every thread will have different values for request path, query and body
 		List<HTTPAction> returnList = new ArrayList<HTTPAction>(actions.size());
 		for(HTTPAction source : actions)
 		{
 			HTTPAction actionCopy = new HTTPAction(source);
 			returnList.add(actionCopy);
+		
+			//Apply substitutions before converting to HTTPMethod
+			if(useSubstitutions) applySubstitutions(actionCopy);
 			
-			if(actionCopy.getPath() != null)
-				actionCopy.setPath(Utils.applyRegexSubstitutions(actionCopy.getPath(), substitutions));
+			//Handle HTTPs override
+			if(overrideHttps) actionCopy.setScheme("https");
 			
-			if(actionCopy.getQueryString() != null)
-				actionCopy.setQueryString(Utils.applyRegexSubstitutions(actionCopy.getQueryString(), substitutions));
-			
-			//Body only applies to post and put
-			if(actionCopy.getContent() != null && ("PUT".equals(actionCopy.getMethod()) || "POST".equals(actionCopy.getMethod())))
+			//Re-use HTTP Requests for better performance
+			try
 			{
-				String content = Utils.applyRegexSubstitutions(actionCopy.getContent(), substitutions);
-				actionCopy.setContent(content);
-				actionCopy.setContentLength(content.length());
+				actionCopy.setHttpRequest(HTTPConverter.convertHTTPActionToHTTPClientRequest(actionCopy, host, httpPort, httpsPort));
+			}
+			catch (URISyntaxException e)
+			{
+				throw new RuntimeException("Failed to convert HTTP Action.",e);
 			}
 		}
 		return returnList;
+	}
+	
+	private void applySubstitutions(HTTPAction action)
+	{
+		if(action.getPath() != null)
+			action.setPath(Utils.applyRegexSubstitutions(action.getPath(), substitutions));
+		
+		if(action.getQueryString() != null)
+			action.setQueryString(Utils.applyRegexSubstitutions(action.getQueryString(), substitutions));
+		
+		//Body only applies to post and put
+		if(action.getContent() != null && ("PUT".equals(action.getMethod()) || "POST".equals(action.getMethod())))
+		{
+			String content = Utils.applyRegexSubstitutions(action.getContent(), substitutions);
+			action.setContent(content);
+			action.setContentLength(content.length());
+		}
 	}
 }
