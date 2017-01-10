@@ -26,7 +26,7 @@ public class RecorderProxy
     	}
     	catch(IllegalArgumentException e)
     	{
-    		log.fatal("Invalid CMD line Arguments.");
+    		log.fatal("Invalid CMD line Arguments: " + e.getMessage());
     		RecorderProxyOptions.printOptions();
     		System.exit(1);
     	}
