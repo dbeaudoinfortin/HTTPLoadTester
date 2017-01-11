@@ -51,8 +51,7 @@ public class RecorderProxyServlet implements Servlet
 	@Override
 	public void service(ServletRequest servletRequest, ServletResponse servletResponse) throws ServletException, IOException
 	{
-		//Note The RecorderServletFilter must have been invoke or this cast will fail
-		
+		//Note: The RecorderServletFilter must have been invoked or this cast will fail
 		if(!(servletRequest instanceof RecorderHttpServletRequestWrapper))
 				servletRequest = new RecorderHttpServletRequestWrapper((HttpServletRequest) servletRequest);
 		

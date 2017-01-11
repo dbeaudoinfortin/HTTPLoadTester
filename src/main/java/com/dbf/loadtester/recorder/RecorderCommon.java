@@ -99,6 +99,8 @@ public class RecorderCommon
 	
 	/**
 	 * Handles various control params. Returns true if any param was found.
+	 * This is an alternate way to start and stop recording when you don't have JMX access
+	 * 
 	 * @throws IOException 
 	 */
 	private boolean handleParams(HttpServletRequest httpRequest) throws IOException

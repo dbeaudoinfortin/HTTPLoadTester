@@ -70,7 +70,8 @@ public class RecorderProxy
                         .addMapping("/*")
                 )
                 .addFilter(Servlets.filter("recorderServletFilter", RecorderServletFilter.class)
-                		.addInitParam(RecorderServletFilter.PARAM_DIRECTORY_PATH, options.getDirectory()))
+                		.addInitParam(RecorderServletFilter.PARAM_DIRECTORY_PATH, options.getDirectory())
+                		.addInitParam(RecorderServletFilter.PARAM_IMMEDIATE_START, "" + options.isImmediateStart()))
                 .addFilterUrlMapping("recorderServletFilter", "/*", DispatcherType.REQUEST)
                 .setEagerFilterInit(true);
 

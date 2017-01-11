@@ -14,7 +14,7 @@ import org.apache.log4j.Logger;
 
 import com.dbf.loadtester.common.httpclient.HTTPClientFactory;
 import com.dbf.loadtester.player.config.Constants;
-import com.dbf.loadtester.player.config.PlayerConfiguration;
+import com.dbf.loadtester.player.config.PlayerOptions;
 import com.dbf.loadtester.player.jmx.PlayerManager;
 import com.dbf.loadtester.player.jmx.PlayerManagerMBean;
 
@@ -25,7 +25,7 @@ public class LoadTestPlayer
 	
 	private static Boolean running = false;
 	
-	private static PlayerConfiguration config = null;
+	private static PlayerOptions config = null;
 	private static final List<Thread> workerThreads = new ArrayList<Thread>();
 	private static Thread launcherThread;
 			
@@ -40,10 +40,10 @@ public class LoadTestPlayer
 	{
 		try
 		{
-			config = new PlayerConfiguration(args);
+			config = new PlayerOptions(args);
 			registerMBean();
 			
-			if(args.length > 0)
+			if(!config.isPauseOnStartup())
 			{
 				start();
 			}
@@ -56,7 +56,8 @@ public class LoadTestPlayer
 		}
 		catch(IllegalArgumentException e)
 		{
-			log.error(e.getMessage() + "\r\nMust either provide path to a test plan or provide all arguments.\r\n\r\n" + PlayerConfiguration.getUsage());
+			log.fatal("Invalid CMD line Arguments: " + e.getMessage());
+			PlayerOptions.printOptions();
 			return;
 		}
 		catch(Exception e)
