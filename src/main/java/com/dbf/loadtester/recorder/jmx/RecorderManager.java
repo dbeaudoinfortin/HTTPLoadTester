@@ -12,6 +12,7 @@ import org.apache.log4j.Logger;
 import com.dbf.loadtester.common.json.JsonEncoder;
 import com.dbf.loadtester.player.LoadTestPlayer;
 import com.dbf.loadtester.recorder.filter.RecorderServletFilter;
+import com.google.gson.JsonSyntaxException;
 
 public class RecorderManager implements RecorderManagerMBean
 {
@@ -97,9 +98,16 @@ public class RecorderManager implements RecorderManagerMBean
 	@Override
 	public void setPathSubstitutions(String map)
 	{
-		@SuppressWarnings("unchecked")
-		Map<String,String> newMap = JsonEncoder.fromJson(map, HashMap.class);
-		if(null != newMap) recorderServletFilter.setPathSubs(newMap);
+		try
+		{
+			@SuppressWarnings("unchecked")
+    		Map<String,String> newMap = JsonEncoder.fromJson(map, HashMap.class);
+    		if(null != newMap) recorderServletFilter.setPathSubs(newMap);
+    	}
+    	catch(JsonSyntaxException e)
+    	{
+    		log.warn("Cannot set path-based substitutions. JSON conversion failed for '" + map + "'.");
+    	}
 	}
 
 	@Override
@@ -111,9 +119,16 @@ public class RecorderManager implements RecorderManagerMBean
 	@Override
 	public void setQuerySubstitutions(String map)
 	{
-		@SuppressWarnings("unchecked")
-		Map<String,String> newMap = JsonEncoder.fromJson(map, HashMap.class);
-		if(null != newMap) recorderServletFilter.setQuerySubs(newMap);
+		try
+		{
+			@SuppressWarnings("unchecked")
+    		Map<String,String> newMap = JsonEncoder.fromJson(map, HashMap.class);
+    		if(null != newMap) recorderServletFilter.setQuerySubs(newMap);
+    	}
+    	catch(JsonSyntaxException e)
+    	{
+    		log.warn("Cannot set query-based substitutions. JSON conversion failed for '" + map + "'.");
+    	}
 	}
 
 	@Override
@@ -125,9 +140,16 @@ public class RecorderManager implements RecorderManagerMBean
 	@Override
 	public void setBodySubstitutions(String map)
 	{
-		@SuppressWarnings("unchecked")
-		Map<String,String> newMap = JsonEncoder.fromJson(map, HashMap.class);
-		if(null != newMap) recorderServletFilter.setBodySubs(newMap);
+		try
+		{
+			@SuppressWarnings("unchecked")
+    		Map<String,String> newMap = JsonEncoder.fromJson(map, HashMap.class);
+    		if(null != newMap) recorderServletFilter.setBodySubs(newMap);
+    	}
+    	catch(JsonSyntaxException e)
+    	{
+    		log.warn("Cannot set body-based substitutions. JSON conversion failed for '" + map + "'.");
+    	}
 	}
 
 	@Override

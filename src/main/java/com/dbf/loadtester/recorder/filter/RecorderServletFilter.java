@@ -50,24 +50,40 @@ public class RecorderServletFilter extends RecorderBase implements Filter
 		//Set the substitutions, not possible using init params
 		if(!useParams)
 		{
-			if(null != options.getPathSubs()) this.setPathSubs(options.getPathSubs());
-			if(null != options.getQuerySubs()) this.setQuerySubs(options.getQuerySubs());
-			if(null != options.getBodySubs()) this.setBodySubs(options.getBodySubs());
+			if(null != options.getPathSubs()) 
+			{
+				this.setPathSubs(options.getPathSubs());
+				log.info("Using path-based substitutions: " + options.getPathSubs().toString());
+			}
+				
+			if(null != options.getQuerySubs())
+			{
+				this.setQuerySubs(options.getQuerySubs());
+				log.info("Using query-based substitutions: " + options.getQuerySubs().toString());
+			}
+				
+			if(null != options.getBodySubs())
+			{
+				this.setBodySubs(options.getBodySubs());
+				log.info("Using body-based substitutions: " + options.getBodySubs().toString());
+			}
 		}
 		
 		//Register MBean once the options are set but before starting the recording
 		registerMBean();
+		log.info("HTTP Load Test Recorder Filter initialization complete.");
 		
 		//Start only if configured for immediate start
 		if((useParams && "true".equals(filterConfig.getInitParameter(PARAM_IMMEDIATE_START))) || (!useParams && options.isImmediateStart()))
 		{
     		try
     		{
+    			log.info("Immediate recording requested.");
     			this.startRecording();
     		}
     		catch (IOException e)
     		{
-    			throw new ServletException("Failed to start filter pos-initialization.",e);
+    			throw new ServletException("Failed to start filter post-initialization.",e);
     		}
 		}
 	}

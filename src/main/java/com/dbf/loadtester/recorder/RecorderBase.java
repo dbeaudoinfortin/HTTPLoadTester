@@ -120,12 +120,14 @@ public class RecorderBase
 	
 	public synchronized void startRecording() throws IOException
 	{
+		log.info("Starting recording.");
 		running = true;
 		createNewTestPlan();
 	}
 	
 	public synchronized void stopRecording() throws IOException
 	{
+		log.info("Stopping recording.");
 		running = false;
 		closeTestPlan();
 	}

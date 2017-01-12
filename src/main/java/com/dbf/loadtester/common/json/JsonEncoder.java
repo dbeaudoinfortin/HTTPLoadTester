@@ -53,16 +53,8 @@ public class JsonEncoder
 		return gson.toJson(o);
 	}
 	
-	public static <T> T fromJson(String json, Class<T> classOfT)
+	public static <T> T fromJson(String json, Class<T> classOfT) throws JsonSyntaxException
 	{
-		try
-		{
-			return gson.fromJson(json, classOfT);
-		}
-		catch(JsonSyntaxException e)
-		{
-			log.warn("JSON conversion failed.");
-			return null;
-		}
+		return gson.fromJson(json, classOfT);
 	}
 }
