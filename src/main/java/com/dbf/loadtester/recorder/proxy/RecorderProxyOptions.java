@@ -15,18 +15,20 @@ public class RecorderProxyOptions
 	
 	static
 	{
-		options.addOption("dir", true, "Test Plan Directory");	
-		options.addOption("port", true, "Listener HTTP Port");
-		options.addOption("fhost", true, "Proxy Forwarding Host");
-		options.addOption("fhttpport", true, "Proxy Forwarding HTTP Port");
-		options.addOption("fhttpsport", true, "Proxy Forwarding HTTPS Port");
+		options.addOption("dir", true, "Test Plan directory");	
+		options.addOption("port", true, "Listener HTTP port");
+		options.addOption("fhost", true, "Proxy forwarding host");
+		options.addOption("fhttpport", true, "Proxy forwarding HTTP port");
+		options.addOption("fhttpsport", true, "Proxy forwarding HTTPS port");
+		options.addOption("start", false, "Start recording immediately");
 	}
-	
+
 	private String directory;
 	private Integer port;
 	private String forwardHost;
 	private Integer forwardHTTPPort = 80;
 	private Integer forwardHTTPSPort = 443;
+	private boolean immediateStart;
 	
 	public RecorderProxyOptions(String[] args) throws IllegalArgumentException
 	{
@@ -40,6 +42,8 @@ public class RecorderProxyOptions
 			throw new IllegalArgumentException(e);
 		}
 		
+		immediateStart = cmd.hasOption("start");
+				
 		directory = cmd.getOptionValue("dir");
 		
 		if(null != directory && !Files.isDirectory(Paths.get(directory)))
@@ -116,5 +120,10 @@ public class RecorderProxyOptions
 	public Integer getForwardHTTPSPort()
 	{
 		return forwardHTTPSPort;
+	}
+	
+	public boolean isImmediateStart()
+	{
+		return immediateStart;
 	}
 }

@@ -5,15 +5,15 @@ import java.io.File;
 import org.apache.log4j.Logger;
 
 import com.dbf.loadtester.player.LoadTestPlayer;
-import com.dbf.loadtester.player.config.PlayerConfiguration;
+import com.dbf.loadtester.player.config.PlayerOptions;
 
 public class PlayerManager implements PlayerManagerMBean
 {
 	private static final Logger log = Logger.getLogger(LoadTestPlayer.class);
 	
-	private final PlayerConfiguration config;
+	private final PlayerOptions config;
 	
-	public PlayerManager(PlayerConfiguration config)
+	public PlayerManager(PlayerOptions config)
 	{
 		this.config = config;
 	}

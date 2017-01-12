@@ -4,14 +4,36 @@ import java.io.File;
 import java.io.IOException;
 import java.util.List;
 
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.DefaultParser;
+import org.apache.commons.cli.HelpFormatter;
+import org.apache.commons.cli.Options;
+import org.apache.commons.cli.ParseException;
 import org.apache.log4j.Logger;
 
 import com.dbf.loadtester.common.action.HTTPAction;
 import com.dbf.loadtester.common.json.JsonEncoder;
 
-public class PlayerConfiguration
+public class PlayerOptions
 {
-	private static final Logger log = Logger.getLogger(PlayerConfiguration.class);
+	private static final Logger log = Logger.getLogger(PlayerOptions.class);
+	
+	private static final Options options = new Options();
+	
+	static
+	{
+		options.addOption("testPlanFile", true, "The absolute path to the Json test plan file. ");	
+		options.addOption("threadCount", true, "The total number of threads to run. Each thread will repeat the test plan at least once and until MinRunTime is reached.");
+		options.addOption("staggerTime", true, "The average time offset between the start of each subsequent thread (staggered start).");
+		options.addOption("minRunTime", true, "Minimum runtime ensures that no thread will terminate before the last thread finished at least 1 run.");
+		options.addOption("actionDelay", true, "Time between each action. Set to -1 to use the test plan timings. ");
+		options.addOption("host", true, "The target host.");
+		options.addOption("httpPort", true, "Port to use for HTTP requests.");
+		options.addOption("httpsPort", true, "Port to use for HTTPs requests.");
+		options.addOption("pause", false, "Pause and wait for JMX invocation to start");
+		options.addOption("overrideHttps", false, "Override all HTTPs actions with HTTP");
+		options.addOption("applySubstitutions", false, "Apply variable substitutions, such as <THREAD_ID>, in the test plan.");
+	}
 	
 	private String host = Constants.DEFAULT_HOST;
 	private int httpPort = Constants.DEFAULT_HTTP_PORT;
@@ -23,80 +45,122 @@ public class PlayerConfiguration
 	private long minRunTime = -1;
 	private File testPlanFile;
 	private boolean overrideHttps = false;
+	private boolean pauseOnStartup = false;
 	private List<HTTPAction> actions;
 
-	public PlayerConfiguration(){}
+	public PlayerOptions(){}
 
-	public PlayerConfiguration(String[] args) throws IllegalArgumentException, IOException
+	public PlayerOptions(String[] args) throws IllegalArgumentException, IOException
 	{
 		loadFromArgs(args);
 	}
 	
-	/**
-	 * Expects the following argument in order.
-	 * 
-	 * TestPlanFilePath		The absolute path to the Json test plan file. 
-	 * ThreadCount			The total number of threads to run. Each thread will repeat the test plan at least once and until MinRunTime is reached.
-	 * StaggerTime			The average time offset between the start of each subsequent thread (staggered start).
-	 * MinRunTime			Minimum runtime ensures that no thread will terminate before the last thread finished at least 1 run.
-	 * ActionDelay			Time between each action. Set to -1 to use the test plan timings. 
-	 * Host					The target host.
-	 * HttpPort				Port to use for HTTP requests.
-	 * HttpsPort			Port to use for HTTPs requests.
-	 * 
-	 * @param args
-	 * @throws IllegalArgumentException
-	 * @throws IOException 
-	 */
 	public void loadFromArgs(String[] args) throws IllegalArgumentException, IOException
 	{
-		if(args.length > 1 && args.length != 8) throw new IllegalArgumentException("Incorrect number of arguments.");
+		CommandLine cmd = null;
+		try
+		{
+			cmd = (new DefaultParser()).parse(options, args);
+		}
+		catch(ParseException e)
+		{
+			throw new IllegalArgumentException(e);
+		}
 		
-		//Zero-length args means pause and wait for JMX
-		if(args.length == 0)
+		if(cmd.hasOption("pause"))
 		{
-			log.info("No arguments provided. Awaiting JMX configuration before proceeding.");
+			pauseOnStartup = true;
+			log.info("Paused flag set, will await JMX configuration before proceeding.");
+		}	
+		
+		if(cmd.hasOption("testPlanFile"))
+		{
+			testPlanFile = new File(cmd.getOptionValue("testPlanFile"));
+			log.info("Using test plan file: " + testPlanFile.getAbsolutePath());
 		}
-		else
+		
+		if(cmd.hasOption("overrideHttps"))
 		{
-			testPlanFile = new File(args[0]);
+			pauseOnStartup = true;
+			log.info("HTTPS override enabled.");
 		}
-				
-		if(args.length > 1)
+		
+		if(cmd.hasOption("applySubstitutions"))
 		{
-			threadCount = Integer.parseInt(args[1]);
+			useSubstitutions = true;
+			log.info("Substitutions will be applied to the Test Plan.");
+		}
+		
+		if(cmd.hasOption("threadCount"))
+		{
+			threadCount = Integer.parseInt(cmd.getOptionValue("threadCount"));
 			log.info("Using thread count: " + threadCount);
-			
-			staggerTime = Long.parseLong(args[2]);
-			log.info("Using stagger time: " + String.format("%.2f",staggerTime /1000.0) + " seconds");
-			
-			actionDelay = Integer.parseInt(args[4]);
-			if (actionDelay < 0)
-				log.info("Using test plan timings for action delay.");
-			else
-				log.info("Using action delay: " + actionDelay + " ms");
-			
-			minRunTime = Long.parseLong(args[3]);
-			log.info("Using minimum run time: " + String.format("%.2f",minRunTime/60000.0) + " minutes");
-			
-			host = args[5];
-			log.info("Using host: " + host);
-			
-			httpPort = Integer.parseInt(args[6]);
-			log.info("Using HTTP port: " + httpPort);
-			
-			httpsPort = Integer.parseInt(args[7]);
-			log.info("Using default HTTPs port: " + httpsPort);
 		}
 		else
 		{
 			log.info("Using default thread count: " + Constants.DEFAULT_THREAD_COUNT);
+		}
+		
+		if(cmd.hasOption("staggerTime"))
+		{
+			staggerTime = Long.parseLong(cmd.getOptionValue("staggerTime"));
+			log.info("Using stagger time: " + String.format("%.2f",staggerTime /1000.0) + " seconds");
+		}
+		else
+		{
 			log.info("Using default stagger time: " + String.format("%.2f",Constants.DEFAULT_STAGGER_TIME /1000.0) + " seconds");
+		}
+		
+		if(cmd.hasOption("actionDelay"))
+		{
+			actionDelay = Integer.parseInt(cmd.getOptionValue("actionDelay"));	
+		}
+		
+		if (actionDelay < 0)
+			log.info("Using test plan timings for action delay.");
+		else
+			log.info("Using action delay: " + actionDelay + " ms");
+		
+		
+		if(cmd.hasOption("minRunTime"))
+		{
+			minRunTime = Long.parseLong(cmd.getOptionValue("minRunTime"));
+			log.info("Using minimum run time: " + String.format("%.2f",minRunTime/60000.0) + " minutes");
+		}
+		else
+		{
 			log.info("Using default minimum run time, as calculated from test plan.");
+		}
+		
+		if(cmd.hasOption("host"))
+		{
+			host = cmd.getOptionValue("host");
+			log.info("Using host: " + host);
+		}
+		else
+		{
 			log.info("Using default host: " + Constants.DEFAULT_HOST);
+		}
+		
+		if(cmd.hasOption("httpPort"))
+		{
+			httpPort = Integer.parseInt(cmd.getOptionValue("httpPort"));
+			log.info("Using HTTP port: " + httpPort);
+		}
+		else
+		{
 			log.info("Using default HTTP port: " + Constants.DEFAULT_HTTP_PORT);
-			log.info("Using default HTTPs port: " + Constants.DEFAULT_HTTPS_PORT);
-		}	
+		}
+		
+		if(cmd.hasOption("httpsPort"))
+		{
+			httpsPort = Integer.parseInt(cmd.getOptionValue("httpsPort"));
+			log.info("Using HTTPS port: " + httpsPort);
+		}
+		else
+		{
+			log.info("Using default HTTPS port: " + Constants.DEFAULT_HTTPS_PORT);
+		}
 	}
 	
 	private void validate() throws IllegalArgumentException, IOException
@@ -134,19 +198,12 @@ public class PlayerConfiguration
 		log.info("Test plan loaded. Total duration approx. " + String.format("%.2f",totalTestPlanTime/60000.0) + " minutes.");
 	}
 	
-	public static String getUsage()
+	public static void printOptions()
 	{
-		return "Usage 1: TestPlanFilePath\r\n"
-				+ "Usage 2: TestPlanFilePath ThreadCount StaggerTime MinRunTime Host HttpPort HttpsPort\r\n\r\n"
-				+ "TestPlanFilePath    The absolute path to the Json test plan file.\r\n"
-				+ "ThreadCount         The total number of threads to run. Each thread will repeat the test plan at least once and until MinRunTime is reached.\r\n"
-				+ "StaggerTime         The average time offset between the start of each subsequent thread (staggered start). In milliseconds.\r\n"
-				+ "MinRunTime          Minimum runtime ensures that no thread will terminate before the last thread finished at least 1 run. In milliseconds.\r\n"
-				+ "ActionDelay         Time between each action. Set to -1 to use the test plan timings. In milliseconds.\r\n"
-				+ "Host                The target host.\r\n"
-				+ "HttpPort            Port to use for HTTP requests.\r\n"
-				+ "HttpsPort           Port to use for HTTPs requests.";
+		HelpFormatter formatter = new HelpFormatter();
+		formatter.printHelp(" ", options);
 	}
+
 
 	public int getThreadCount()
 	{
@@ -255,5 +312,10 @@ public class PlayerConfiguration
 	public void setOverrideHttps(boolean overrideHttps)
 	{
 		this.overrideHttps = overrideHttps;
+	}
+
+	public boolean isPauseOnStartup()
+	{
+		return pauseOnStartup;
 	}
 }

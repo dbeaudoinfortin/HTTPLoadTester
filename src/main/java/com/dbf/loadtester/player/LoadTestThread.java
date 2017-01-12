@@ -15,7 +15,7 @@ import org.apache.log4j.Logger;
 import com.dbf.loadtester.common.action.HTTPAction;
 import com.dbf.loadtester.common.action.HTTPConverter;
 import com.dbf.loadtester.common.util.Utils;
-import com.dbf.loadtester.player.config.PlayerConfiguration;
+import com.dbf.loadtester.player.config.PlayerOptions;
 import com.dbf.loadtester.player.stats.ActionTime;
 
 public class LoadTestThread implements Runnable
@@ -40,7 +40,7 @@ public class LoadTestThread implements Runnable
 	
 	private final Map<String, ActionTime> actionTimes = new HashMap<String, ActionTime>(100);
 	
-	public LoadTestThread(PlayerConfiguration config, int threadNumber, HttpClient httpClient)
+	public LoadTestThread(PlayerOptions config, int threadNumber, HttpClient httpClient)
 	{
 		this.threadNumber = threadNumber;
 		this.httpClient = httpClient;

@@ -26,7 +26,7 @@ public class RecorderProxy
     	}
     	catch(IllegalArgumentException e)
     	{
-    		log.fatal("Invalid CMD line Arguments.");
+    		log.fatal("Invalid CMD line Arguments: " + e.getMessage());
     		RecorderProxyOptions.printOptions();
     		System.exit(1);
     	}
@@ -70,7 +70,8 @@ public class RecorderProxy
                         .addMapping("/*")
                 )
                 .addFilter(Servlets.filter("recorderServletFilter", RecorderServletFilter.class)
-                		.addInitParam(RecorderServletFilter.PARAM_DIRECTORY_PATH, options.getDirectory()))
+                		.addInitParam(RecorderServletFilter.PARAM_DIRECTORY_PATH, options.getDirectory())
+                		.addInitParam(RecorderServletFilter.PARAM_IMMEDIATE_START, "" + options.isImmediateStart()))
                 .addFilterUrlMapping("recorderServletFilter", "/*", DispatcherType.REQUEST)
                 .setEagerFilterInit(true);
 

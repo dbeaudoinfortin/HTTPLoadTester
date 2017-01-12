@@ -28,6 +28,7 @@ public class RecorderServletFilter extends RecorderCommon implements Filter
 	private static final Logger log = Logger.getLogger(RecorderServletFilter.class);
 
 	public static final String PARAM_DIRECTORY_PATH = "TestPlanDirectory";
+	public static final String PARAM_IMMEDIATE_START = "Start";
 	
 	public void init(FilterConfig filterConfig) throws ServletException 
 	{
@@ -35,6 +36,19 @@ public class RecorderServletFilter extends RecorderCommon implements Filter
 		if(null != testPlanDirectory && !testPlanDirectory.isEmpty()) setTestPlanDirectory(Paths.get(testPlanDirectory));
 		log.info("Initializing HTTP Load Test Recorder Filter using test plan directory " + this.getTestPlanDirectory());
 		registerMBean();
+		
+		//Start only if configured for immediate start
+		if("true".equals(filterConfig.getInitParameter(PARAM_IMMEDIATE_START)))
+		{
+    		try
+    		{
+    			this.startRecording();
+    		}
+    		catch (IOException e)
+    		{
+    			throw new ServletException("Failed to start filter pos-initialization.",e);
+    		}
+		}
 	}
 	
 	public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException 
