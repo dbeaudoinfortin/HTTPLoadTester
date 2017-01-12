@@ -15,7 +15,7 @@ import javax.servlet.http.HttpServletRequest;
 
 import org.apache.log4j.Logger;
 
-import com.dbf.loadtester.recorder.RecorderCommon;
+import com.dbf.loadtester.recorder.RecorderBase;
 import com.dbf.loadtester.recorder.jmx.RecorderManager;
 import com.dbf.loadtester.recorder.jmx.RecorderManagerMBean;
 
@@ -23,22 +23,43 @@ import com.dbf.loadtester.recorder.jmx.RecorderManagerMBean;
  * Servlet Filter version of the recorder.
  *
  */
-public class RecorderServletFilter extends RecorderCommon implements Filter
+public class RecorderServletFilter extends RecorderBase implements Filter
 {
 	private static final Logger log = Logger.getLogger(RecorderServletFilter.class);
 
 	public static final String PARAM_DIRECTORY_PATH = "TestPlanDirectory";
 	public static final String PARAM_IMMEDIATE_START = "Start";
 	
+	private boolean useParams = true;
+	private RecorderServletFilterOptions options;
+	
+	public RecorderServletFilter() {}
+	
+	public RecorderServletFilter(RecorderServletFilterOptions options)
+	{
+		this.options = options;
+		useParams = false;
+	}
+
 	public void init(FilterConfig filterConfig) throws ServletException 
 	{
-		String testPlanDirectory = filterConfig.getInitParameter(PARAM_DIRECTORY_PATH);
+		String testPlanDirectory = useParams ? filterConfig.getInitParameter(PARAM_DIRECTORY_PATH) : options.getTestPlanDirectory();
 		if(null != testPlanDirectory && !testPlanDirectory.isEmpty()) setTestPlanDirectory(Paths.get(testPlanDirectory));
 		log.info("Initializing HTTP Load Test Recorder Filter using test plan directory " + this.getTestPlanDirectory());
+		
+		//Set the substitutions, not possible using init params
+		if(!useParams)
+		{
+			if(null != options.getPathSubs()) this.setPathSubs(options.getPathSubs());
+			if(null != options.getQuerySubs()) this.setQuerySubs(options.getQuerySubs());
+			if(null != options.getBodySubs()) this.setBodySubs(options.getBodySubs());
+		}
+		
+		//Register MBean once the options are set but before starting the recording
 		registerMBean();
 		
 		//Start only if configured for immediate start
-		if("true".equals(filterConfig.getInitParameter(PARAM_IMMEDIATE_START)))
+		if((useParams && "true".equals(filterConfig.getInitParameter(PARAM_IMMEDIATE_START))) || (!useParams && options.isImmediateStart()))
 		{
     		try
     		{

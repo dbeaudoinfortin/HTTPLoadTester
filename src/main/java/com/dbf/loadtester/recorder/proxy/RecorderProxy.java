@@ -6,12 +6,15 @@ import javax.servlet.ServletException;
 import org.apache.log4j.Logger;
 
 import com.dbf.loadtester.recorder.filter.RecorderServletFilter;
+import com.dbf.loadtester.recorder.filter.RecorderServletFilterFactory;
+import com.dbf.loadtester.recorder.filter.RecorderServletFilterOptions;
 
 import io.undertow.Undertow;
 import io.undertow.server.HttpHandler;
 import io.undertow.servlet.Servlets;
 import io.undertow.servlet.api.DeploymentInfo;
 import io.undertow.servlet.api.DeploymentManager;
+import io.undertow.servlet.api.FilterInfo;
 
 public class RecorderProxy
 {
@@ -69,9 +72,7 @@ public class RecorderProxy
                         .addInitParam(RecorderProxyServlet.PARAM_PROXY_HOST, options.getForwardHost())
                         .addMapping("/*")
                 )
-                .addFilter(Servlets.filter("recorderServletFilter", RecorderServletFilter.class)
-                		.addInitParam(RecorderServletFilter.PARAM_DIRECTORY_PATH, options.getDirectory())
-                		.addInitParam(RecorderServletFilter.PARAM_IMMEDIATE_START, "" + options.isImmediateStart()))
+                .addFilter(buildRecorderServletFilter(options))
                 .addFilterUrlMapping("recorderServletFilter", "/*", DispatcherType.REQUEST)
                 .setEagerFilterInit(true);
 
@@ -79,4 +80,16 @@ public class RecorderProxy
         deploymentManager.deploy();
         return deploymentManager.start();
     }
+	
+	private static FilterInfo buildRecorderServletFilter(RecorderProxyOptions options) throws ServletException
+	{
+		FilterInfo filter = Servlets.filter("recorderServletFilter", RecorderServletFilter.class);
+		filter.setInstanceFactory(new RecorderServletFilterFactory((new RecorderServletFilterOptions())
+				.withImmediateStart(options.isImmediateStart())
+				.withTestPlanDirectory(options.getDirectory())
+				.withPathSubs(options.getPathSubs())
+				.withQuerySubs(options.getQuerySubs())
+				.withBodySubs(options.getBodySubs())));
+		return filter;
+	}
 }

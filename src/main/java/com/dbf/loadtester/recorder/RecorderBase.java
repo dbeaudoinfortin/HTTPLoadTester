@@ -29,9 +29,9 @@ import com.dbf.loadtester.common.util.Utils;
  * Note that this only support a single test case at a time.
  *
  */
-public class RecorderCommon
+public class RecorderBase
 {
-	private static final Logger log = Logger.getLogger(RecorderCommon.class);
+	private static final Logger log = Logger.getLogger(RecorderBase.class);
 		
 	private static final String DEFAULT_DIRECTORY_PATH = Utils.isWindows() ? "C:\\temp\\httploadtester\\" : "/var/httploadtester/";
 	

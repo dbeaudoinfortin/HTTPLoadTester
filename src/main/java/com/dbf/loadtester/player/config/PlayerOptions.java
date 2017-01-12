@@ -32,7 +32,7 @@ public class PlayerOptions
 		options.addOption("httpsPort", true, "Port to use for HTTPs requests.");
 		options.addOption("pause", false, "Pause and wait for JMX invocation to start");
 		options.addOption("overrideHttps", false, "Override all HTTPs actions with HTTP");
-		options.addOption("applySubstitutions", false, "Apply variable substitutions, such as <THREAD_ID>, in the test plan.");
+		options.addOption("applySubs", false, "Apply variable substitutions, such as <THREAD_ID>, in the test plan.");
 	}
 	
 	private String host = Constants.DEFAULT_HOST;
@@ -85,7 +85,7 @@ public class PlayerOptions
 			log.info("HTTPS override enabled.");
 		}
 		
-		if(cmd.hasOption("applySubstitutions"))
+		if(cmd.hasOption("applySubs"))
 		{
 			useSubstitutions = true;
 			log.info("Substitutions will be applied to the Test Plan.");
