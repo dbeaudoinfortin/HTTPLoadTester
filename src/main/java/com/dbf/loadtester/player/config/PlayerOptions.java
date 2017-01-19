@@ -24,13 +24,13 @@ public class PlayerOptions
 	{
 		options.addOption("testPlanFile", true, "The absolute path to the Json test plan file. ");	
 		options.addOption("threadCount", true, "The total number of threads to run. Each thread will repeat the test plan at least once and until MinRunTime is reached.");
-		options.addOption("staggerTime", true, "The average time offset between the start of each subsequent thread (staggered start).");
-		options.addOption("minRunTime", true, "Minimum runtime ensures that no thread will terminate before the last thread finished at least 1 run.");
-		options.addOption("actionDelay", true, "Time between each action. Set to -1 to use the test plan timings. ");
+		options.addOption("staggerTime", true, "The average time offset between the start of each subsequent thread (staggered start). Value in milliseconds.");
+		options.addOption("minRunTime", true, "Minimum runtime ensures that no thread will terminate before the last thread finished at least 1 run. Value in seconds.");
+		options.addOption("actionDelay", true, "Time between each action. Set to zero for no delay, set to -1 to use the test plan timings. Value in milliseconds.");
 		options.addOption("host", true, "The target host.");
 		options.addOption("httpPort", true, "Port to use for HTTP requests.");
 		options.addOption("httpsPort", true, "Port to use for HTTPs requests.");
-		options.addOption("pause", false, "Pause and wait for JMX invocation to start");
+		options.addOption("pause", false, "Pause and wait for JMX invocation to start.");
 		options.addOption("overrideHttps", false, "Override all HTTPs actions with HTTP");
 		options.addOption("applySubs", false, "Apply variable substitutions, such as <THREAD_ID>, in the test plan.");
 	}
@@ -42,7 +42,7 @@ public class PlayerOptions
 	private long staggerTime = Constants.DEFAULT_STAGGER_TIME;
 	private int actionDelay = Constants.DEFAULT_TIME_BETWEEN_ACTIONS;
 	private boolean useSubstitutions = false;
-	private long minRunTime = -1;
+	private long minRunTime = Constants.DEFAULT_MINIMUM_RUN_TIME;
 	private File testPlanFile;
 	private boolean overrideHttps = false;
 	private boolean pauseOnStartup = false;
@@ -112,9 +112,7 @@ public class PlayerOptions
 		}
 		
 		if(cmd.hasOption("actionDelay"))
-		{
 			actionDelay = Integer.parseInt(cmd.getOptionValue("actionDelay"));	
-		}
 		
 		if (actionDelay < 0)
 			log.info("Using test plan timings for action delay.");
@@ -123,14 +121,12 @@ public class PlayerOptions
 		
 		
 		if(cmd.hasOption("minRunTime"))
-		{
-			minRunTime = Long.parseLong(cmd.getOptionValue("minRunTime"));
-			log.info("Using minimum run time: " + String.format("%.2f",minRunTime/60000.0) + " minutes");
-		}
-		else
-		{
+			minRunTime = Long.parseLong(cmd.getOptionValue("minRunTime")) * 1000;
+		
+		if(minRunTime < 0)
 			log.info("Using default minimum run time, as calculated from test plan.");
-		}
+		else
+			log.info("Using minimum run time: " + String.format("%.2f", minRunTime/60000.0) + " minutes");
 		
 		if(cmd.hasOption("host"))
 		{

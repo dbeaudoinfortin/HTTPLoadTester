@@ -21,7 +21,7 @@ public class RecorderProxyOptions
 	
 	static
 	{
-		options.addOption("dir", true, "Test Plan directory");	
+		options.addOption("dir", true, "The test plan directory. Recorded test plans will be saved in this directory.");	
 		options.addOption("port", true, "Listener HTTP port");
 		options.addOption("fHost", true, "Proxy forwarding host");
 		options.addOption("fHttpPort", true, "Proxy forwarding HTTP port");

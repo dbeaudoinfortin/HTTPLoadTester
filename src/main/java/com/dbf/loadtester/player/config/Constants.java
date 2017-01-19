@@ -15,5 +15,5 @@ public class Constants
 	
 	//TIMINGS
 	public static final int DEFAULT_TIME_BETWEEN_ACTIONS = -1;
-	
+	public static final int DEFAULT_MINIMUM_RUN_TIME = -1;
 }
