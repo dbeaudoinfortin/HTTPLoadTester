@@ -8,7 +8,6 @@ import org.apache.http.client.HttpClient;
 import org.apache.http.conn.ssl.DefaultHostnameVerifier;
 import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
 import org.apache.http.impl.client.HttpClientBuilder;
-import org.apache.http.ssl.SSLContexts;
 import org.apache.log4j.Logger;
 
 public class HTTPClientFactory
@@ -21,13 +20,13 @@ public class HTTPClientFactory
 	{
 		try
 		{
-    		SSLContext sslcontext = SSLContexts.custom().useProtocol("SSL").build();
+    		SSLContext sslcontext = SSLContext.getInstance("TLS");
             sslcontext.init(null, new TrustManager[] {new EasyX509TrustManager(null)}, null);
             sslFactory = new SSLConnectionSocketFactory(sslcontext, new DefaultHostnameVerifier());
 		}
         catch (Throwable t)
 		{
-        	log.fatal("Fail to initialize SSL trust Manager.",t);
+        	log.fatal("Failed to initialize SSL Trust Manager.",t);
 		}
 	}
 	
@@ -36,6 +35,7 @@ public class HTTPClientFactory
 		return HttpClientBuilder
 				.create()
 				.disableRedirectHandling()
+				.disableCookieManagement()
 				.setMaxConnPerRoute(maxConnections)
 				.setMaxConnTotal(maxConnections)
 				.setSSLSocketFactory(sslFactory)

@@ -31,6 +31,7 @@ public class PlayerOptions
 		options.addOption("httpPort", true, "Port to use for HTTP requests.");
 		options.addOption("httpsPort", true, "Port to use for HTTPs requests.");
 		options.addOption("pause", false, "Pause and wait for JMX invocation to start.");
+		options.addOption("keepAlive", false, "Keep Load Test Player alive after all threads have halted.");
 		options.addOption("overrideHttps", false, "Override all HTTPs actions with HTTP");
 		options.addOption("applySubs", false, "Apply variable substitutions, such as <THREAD_ID>, in the test plan.");
 	}
@@ -46,6 +47,7 @@ public class PlayerOptions
 	private File testPlanFile;
 	private boolean overrideHttps = false;
 	private boolean pauseOnStartup = false;
+	private boolean keepAlive = false;
 	private List<HTTPAction> actions;
 
 	public PlayerOptions(){}
@@ -71,7 +73,13 @@ public class PlayerOptions
 		{
 			pauseOnStartup = true;
 			log.info("Paused flag set, will await JMX configuration before proceeding.");
-		}	
+		}
+		
+		if(cmd.hasOption("keepAlive"))
+		{
+			keepAlive = true;
+			log.info("Keep Alive flag set, will prevent termination after threads have completed.");
+		}
 		
 		if(cmd.hasOption("testPlanFile"))
 		{
@@ -313,5 +321,10 @@ public class PlayerOptions
 	public boolean isPauseOnStartup()
 	{
 		return pauseOnStartup;
+	}
+
+	public boolean isKeepAlive()
+	{
+		return keepAlive;
 	}
 }

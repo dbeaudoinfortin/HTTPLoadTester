@@ -49,10 +49,13 @@ public class LoadTestPlayer
 			}
 			else
 			{
-				//Wait for JMX (forever)
+				//Wait for JMX to launch worker threads before terminating
 				log.info("Initialization complete. Waiting for JMX to start.");
-				while(true) Thread.sleep(1000000);
+				while(!running) Thread.sleep(2000);
 			}
+			
+			//Never terminate if keep alive is set.
+			if(config.isKeepAlive()) while(!running) Thread.sleep(100000);
 		}
 		catch(IllegalArgumentException e)
 		{

@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
 
+import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
 import org.apache.log4j.Logger;
@@ -170,12 +171,17 @@ public class LoadTestThread implements Runnable
 		{
     		startTime = System.currentTimeMillis();
     		response = httpClient.execute(action.getHttpRequest());
+    		
+    		//Consume the response body fully so that  the connection can be reused
+    		HttpEntity entity = response.getEntity();
+    		if(null != entity) Utils.discardStream(entity.getContent());
+
     		endTime = System.currentTimeMillis();
 		}
     	finally
 		{
-    		//Release connection and makes it reusable
-    		action.getHttpRequest().reset();
+    		//Release connection and make it reusable
+    		action.getHttpRequest().releaseConnection();;
 		}
 		
 		log.info("Thread " + threadNumber + " recieved HTTP code " + response.getStatusLine().getStatusCode() + " for action " + action.getId() + " " + action.getMethod() + " " + action.getPath() + (action.getQueryString() == null ? "" : action.getQueryString()) + ".");

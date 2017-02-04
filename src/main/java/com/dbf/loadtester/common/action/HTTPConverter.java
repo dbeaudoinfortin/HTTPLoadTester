@@ -106,21 +106,26 @@ public class HTTPConverter
 			
 		}
 		
+		//Process special headers
 		for (Map.Entry<String,String> entry : headers.entrySet())
 		{
 			String headerName = entry.getKey();
+			String headerValue = entry.getValue();
 			if(headerName.equals("host"))
 			{
 				httpMethod.addHeader(headerName, host);
+				continue;
 			}
-			else if(hasContent && (headerName.equals("Content-Length") ||headerName.equals("Content-Type")))
-			{
-				continue;  //already set by the setEntity() method above.
-			}
-			else
-			{
-				httpMethod.addHeader(headerName, entry.getValue());
-			}
+			
+			//already set by the setEntity() method above.
+			if(hasContent && (headerName.equals("Content-Length") || headerName.equals("Content-Type")))
+				continue;
+			
+			//For performance reasons, don't force close the connection
+			if(headerName.equals("Connection") && headerValue.equals("close"))
+				continue;
+
+			httpMethod.addHeader(headerName, headerValue);
 		}
 		
 		return httpMethod;

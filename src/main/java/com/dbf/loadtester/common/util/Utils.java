@@ -1,5 +1,7 @@
 package com.dbf.loadtester.common.util;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.regex.Pattern;
@@ -26,5 +28,19 @@ public class Utils
 		}
 
 		return source;
+	}
+	
+	public static void discardStream(InputStream in) throws IOException
+	{
+		try
+		{
+			byte[] byteArray = new byte[2048];
+			while(in.read(byteArray) > -1);
+		}
+		finally
+		{
+			in.close();
+		}
+		
 	}
 }
