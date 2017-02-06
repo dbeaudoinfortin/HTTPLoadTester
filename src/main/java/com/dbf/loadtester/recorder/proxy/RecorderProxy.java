@@ -5,6 +5,7 @@ import javax.servlet.ServletException;
 
 import org.apache.log4j.Logger;
 
+import com.dbf.loadtester.common.util.SSLUtil;
 import com.dbf.loadtester.recorder.filter.RecorderServletFilter;
 import com.dbf.loadtester.recorder.filter.RecorderServletFilterFactory;
 import com.dbf.loadtester.recorder.filter.RecorderServletFilterOptions;
@@ -45,7 +46,8 @@ public class RecorderProxy
 		try
 		{
 			server = Undertow.builder()
-	                .addHttpListener(options.getPort(), "localhost")
+	                .addHttpListener(options.getHttpPort(), "localhost")
+	                .addHttpsListener(options.getHttpsPort(), "localhost", SSLUtil.buildSSLContext())
 	                .setHandler(buildHttpHandler(options)).build();
 		} 
 		catch(Throwable t)

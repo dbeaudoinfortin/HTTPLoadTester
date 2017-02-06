@@ -22,7 +22,8 @@ public class RecorderProxyOptions
 	static
 	{
 		options.addOption("dir", true, "The test plan directory. Recorded test plans will be saved in this directory.");	
-		options.addOption("port", true, "Listener HTTP port");
+		options.addOption("httpPort", true, "Listener HTTP port");
+		options.addOption("httpsPort", true, "Listener HTTPS port");
 		options.addOption("fHost", true, "Proxy forwarding host");
 		options.addOption("fHttpPort", true, "Proxy forwarding HTTP port");
 		options.addOption("fHttpsPort", true, "Proxy forwarding HTTPS port");
@@ -33,7 +34,8 @@ public class RecorderProxyOptions
 	}
 
 	private String directory;
-	private Integer port;
+	private Integer httpPort;
+	private Integer httpsPort;
 	private String forwardHost;
 	private Integer forwardHTTPPort = 80;
 	private Integer forwardHTTPSPort = 443;
@@ -64,15 +66,27 @@ public class RecorderProxyOptions
 	
 		try
 		{
-			String portString = cmd.getOptionValue("port");
-			if(portString != null) port = Integer.parseInt(portString);
+			String portString = cmd.getOptionValue("httpPort");
+			if(portString != null) httpPort = Integer.parseInt(portString);
 		}
 		catch (NumberFormatException e)
 		{
-			throw new IllegalArgumentException("Invalid listener port number.");
+			throw new IllegalArgumentException("Invalid listener HTTP port number.");
 		}
 		
-		if(null != port  && port < 0) throw new IllegalArgumentException("Invalid listener port number.");
+		if(null != httpPort  && httpPort < 0) throw new IllegalArgumentException("Invalid listener HTTP port number.");
+		
+		try
+		{
+			String portString = cmd.getOptionValue("httpsPort");
+			if(portString != null) httpsPort = Integer.parseInt(portString);
+		}
+		catch (NumberFormatException e)
+		{
+			throw new IllegalArgumentException("Invalid listener HTTPS port number.");
+		}
+		
+		if(null != httpsPort  && httpsPort < 0) throw new IllegalArgumentException("Invalid listener HTTPS port number.");
 		
 		forwardHost = cmd.getOptionValue("fHost");
 		
@@ -166,9 +180,14 @@ public class RecorderProxyOptions
 		return directory;
 	}
 
-	public Integer getPort()
+	public Integer getHttpPort()
 	{
-		return port;
+		return httpPort;
+	}
+	
+	public Integer getHttpsPort()
+	{
+		return httpsPort;
 	}
 
 	public String getForwardHost()
