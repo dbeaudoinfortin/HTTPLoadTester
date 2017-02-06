@@ -132,14 +132,20 @@ public class LoadTestPlayer
 							thread.start();
 						}
 						
-						if(i != config.getThreadCount()) //Don't wait after the last thread is spun up
+						//Apply stagger time, if configured
+						//But, don't wait after the last thread is spun up., that would pointless :)
+						if(config.getStaggerTime() > 0 && (i != config.getThreadCount()))
 						{
-    						int staggerOffset = (int)(config.getStaggerTime() * Constants.MAX_STAGGER_OFFSET);
-    						long stagger = (config.getStaggerTime() - staggerOffset) + random.nextInt((int)(staggerOffset*2));
+							//The strategy is to offset the start of each thread by some amount of time (Thread Stagger Time)
+							//We don't want this offset to be exactly the same because that doesn't simulate realistic load
+							//So we pick a random number that will on average be equal to the provided stagger time
+							//The range is determined by the Max Stagger Offset. ie T = T +/- (T x 0.75)
+    						double staggerOffset = (config.getStaggerTime() * Constants.MAX_STAGGER_OFFSET);
+    						double stagger = (config.getStaggerTime() - staggerOffset) + (random.nextDouble() * staggerOffset * 2);
     						
     						try
     						{
-    							Thread.sleep(stagger < 0 ? 0 : stagger);
+    							Thread.sleep(Math.round(stagger));
     						}
     						catch(InterruptedException e)
     						{

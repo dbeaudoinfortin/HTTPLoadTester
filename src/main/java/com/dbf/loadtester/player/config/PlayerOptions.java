@@ -112,7 +112,7 @@ public class PlayerOptions
 		if(cmd.hasOption("staggerTime"))
 		{
 			staggerTime = Long.parseLong(cmd.getOptionValue("staggerTime"));
-			log.info("Using stagger time: " + String.format("%.2f",staggerTime /1000.0) + " seconds");
+			log.info("Using stagger time: " + String.format("%.2f", staggerTime /1000.0) + " seconds");
 		}
 		else
 		{
