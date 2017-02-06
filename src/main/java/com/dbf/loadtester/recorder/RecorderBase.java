@@ -91,6 +91,7 @@ public class RecorderBase
 		//Request Body only applies to PUT and POST 
 		if(bodySubs.size() > 0 && httpAction.getContent() != null && ("PUT".equals(httpAction.getMethod()) || "POST".equals(httpAction.getMethod())))
 		{
+			//Content length needs to be updated
 			String content = Utils.applyRegexSubstitutions(httpAction.getContent(), bodySubs);
 			httpAction.setContent(content);
 			httpAction.setContentLength(content.length());

@@ -60,9 +60,14 @@ public class HTTPConverter
 		Enumeration<String> headerNames = httpRequest.getHeaderNames();
 		while(headerNames.hasMoreElements())
 		{
-			String name = headerNames.nextElement();
-			String value = httpRequest.getHeader(name);
-			headers.put(name, value);
+			String headerName = headerNames.nextElement();
+			
+			//Ignore content headers
+			if(headerName.equals("Content-Length") || headerName.equals("Content-Type"))
+				continue;
+			
+			String value = httpRequest.getHeader(headerName);
+			headers.put(headerName, value);
 		}
 		
 		return headers;
@@ -118,7 +123,7 @@ public class HTTPConverter
 			}
 			
 			//already set by the setEntity() method above.
-			if(hasContent && (headerName.equals("Content-Length") || headerName.equals("Content-Type")))
+			if(headerName.equals("Content-Length") || headerName.equals("Content-Type"))
 				continue;
 			
 			//For performance reasons, don't force close the connection
