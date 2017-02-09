@@ -106,31 +106,37 @@ public class HTTPConverter
 		
 		if(hasContent)
 		{
-			HttpEntity requestEntity = new ByteArrayEntity(content, ContentType.parse(contentType));
+			HttpEntity requestEntity = new ByteArrayEntity(content, (contentType == null || contentType.equals("")) ? null : ContentType.parse(contentType));
 			((HttpEntityEnclosingRequestBase) httpMethod).setEntity(requestEntity);
 			
 		}
 		
 		//Process special headers
-		for (Map.Entry<String,String> entry : headers.entrySet())
+		if(headers != null && headers.size() > 0)
 		{
-			String headerName = entry.getKey();
-			String headerValue = entry.getValue();
-			if(headerName.equals("host"))
+			for (Map.Entry<String,String> entry : headers.entrySet())
 			{
-				httpMethod.addHeader(headerName, host);
-				continue;
+				String headerName = entry.getKey();
+				if(headerName.equals(""))
+					continue;
+				
+				String headerValue = entry.getValue();
+				if(headerName.equals("host"))
+				{
+					httpMethod.addHeader(headerName, host);
+					continue;
+				}
+				
+				//already set by the setEntity() method above.
+				if(headerName.equals("Content-Length") || headerName.equals("Content-Type"))
+					continue;
+				
+				//For performance reasons, don't force close the connection
+				if(headerName.equals("Connection") && headerValue.equals("close"))
+					continue;
+	
+				httpMethod.addHeader(headerName, headerValue);
 			}
-			
-			//already set by the setEntity() method above.
-			if(headerName.equals("Content-Length") || headerName.equals("Content-Type"))
-				continue;
-			
-			//For performance reasons, don't force close the connection
-			if(headerName.equals("Connection") && headerValue.equals("close"))
-				continue;
-
-			httpMethod.addHeader(headerName, headerValue);
 		}
 		
 		return httpMethod;
@@ -142,8 +148,8 @@ public class HTTPConverter
 		uriBuilder.setScheme(scheme);
 		uriBuilder.setHost(host);
 		uriBuilder.setPort(scheme.equals("https") ? httpsPort : httpPort);
-		uriBuilder.setCustomQuery(queryString);
-		uriBuilder.setPath(path);
+		uriBuilder.setCustomQuery((queryString != null && queryString.equals("")) ? null : queryString);
+		uriBuilder.setPath((path != null && path.equals("")) ? null : path);
 		return uriBuilder.build();
 	}
 	
