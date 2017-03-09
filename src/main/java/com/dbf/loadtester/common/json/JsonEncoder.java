@@ -2,11 +2,14 @@ package com.dbf.loadtester.common.json;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.LinkedList;
 import java.util.List;
 
+import org.apache.commons.io.input.BOMInputStream;
 import org.apache.log4j.Logger;
 
 import com.dbf.loadtester.common.action.HTTPAction;
@@ -26,7 +29,8 @@ public class JsonEncoder
 		BufferedReader reader = null;
 		try
 		{
-			reader = new BufferedReader (new FileReader(testPlan));
+			//Wrap in a BOMInputStream to discard the UTF BOM marker, if present.
+			reader = new BufferedReader(new InputStreamReader(new BOMInputStream(new FileInputStream(testPlan))));
 			String line;
 	
 			int i = 1;

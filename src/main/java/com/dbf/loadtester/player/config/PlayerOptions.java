@@ -186,7 +186,7 @@ public class PlayerOptions
 		//Load the test plan. We need to determine the test plan length before continuing
 		log.info("Loading test plan " + testPlanFile);
 		actions = JsonEncoder.loadTestPlan(testPlanFile);
-		if (actions.size() < 1) throw new IllegalArgumentException("Invalid test plan" + testPlanFile + ". Must contain at least one action.");
+		if (actions.size() < 1) throw new IllegalArgumentException("Invalid test plan " + testPlanFile + ". Must contain at least one action.");
 
 		long totalTestPlanTime = 0;
 		for(HTTPAction action : actions)
