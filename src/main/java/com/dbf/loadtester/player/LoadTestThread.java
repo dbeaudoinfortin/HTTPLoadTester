@@ -160,7 +160,7 @@ public class LoadTestThread implements Runnable
 	{
 		if(null == action.getHttpRequest())
 		{
-			log.error("Cannot execute action " + action.getPath() + ". Method " + action.getMethod() + " is not supported.");
+			log.error("Cannot execute action " + action + ". Method " + action.getMethod() + " is not supported.");
 			return null;
 		}
 
@@ -178,13 +178,18 @@ public class LoadTestThread implements Runnable
 
     		endTime = System.currentTimeMillis();
 		}
+		catch(Exception e)
+		{
+			log.error("Failed to execute HTTP Action " + action, e);
+    		throw e;
+		}
     	finally
 		{
     		//Release connection and make it reusable
-    		action.getHttpRequest().releaseConnection();;
+    		action.getHttpRequest().releaseConnection();
 		}
 		
-		log.info("Thread " + threadNumber + " recieved HTTP code " + response.getStatusLine().getStatusCode() + " for action " + action.getId() + " " + action.getMethod() + " " + action.getPath() + (action.getQueryString() == null ? "" : action.getQueryString()) + ".");
+		log.info("Thread " + threadNumber + " recieved HTTP code " + response.getStatusLine().getStatusCode() + " for action " + action + ".");
 		return endTime - startTime;
 	}
 	
@@ -222,7 +227,7 @@ public class LoadTestThread implements Runnable
 			}
 			catch (URISyntaxException e)
 			{
-				throw new RuntimeException("Failed to convert HTTP Action.",e);
+				throw new RuntimeException("Failed to convert HTTP Action " + source, e);
 			}
 		}
 		return returnList;

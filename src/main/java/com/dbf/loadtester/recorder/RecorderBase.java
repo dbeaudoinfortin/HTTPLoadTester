@@ -162,7 +162,7 @@ public class RecorderBase
 	{
 		if(null != testPlanWriter)
 		{
-			log.info("Recording Action: " + action.getMethod() + " " + action.getPath() + (action.getQueryString() == null ? "" : action.getQueryString()));
+			log.info("Recording Action: " + action);
 			testPlanWriter.write(JsonEncoder.toJson(action));
 			testPlanWriter.newLine();
 			testPlanWriter.flush();

@@ -144,6 +144,8 @@ public class HTTPConverter
 	
 	private static URI buildURI(String scheme, String host, int httpPort, int httpsPort, String queryString, String path) throws URISyntaxException
 	{
+		scheme = scheme.toLowerCase();
+		
 		URIBuilder uriBuilder = new URIBuilder();
 		uriBuilder.setScheme(scheme);
 		uriBuilder.setHost(host);

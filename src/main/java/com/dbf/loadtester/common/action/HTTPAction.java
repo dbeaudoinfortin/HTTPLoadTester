@@ -10,7 +10,7 @@ public class HTTPAction implements Serializable
 {
 	private static final long serialVersionUID = 1L;
 	
-	private transient int id;
+	private transient int id = -1;
 	private Date absoluteTime;
 	private long timePassed;
 	private String path;
@@ -166,4 +166,29 @@ public class HTTPAction implements Serializable
 		this.httpRequest = httpRequest;
 	}
 	
+	@Override
+	public String toString()
+	{
+		StringBuilder sb = new StringBuilder();
+		
+		if(id > -1)
+		{
+			sb.append(id);
+			sb.append(":");
+		}
+		sb.append("[");
+		sb.append(getMethod());
+		sb.append(" ");
+		sb.append(scheme);
+		sb.append(" ");
+		sb.append(path);
+		
+		if(queryString != null && !queryString.equals(""))
+		{
+			sb.append("?");
+			sb.append(queryString);
+		}
+		sb.append("]");
+		return sb.toString();
+	}
 }
