@@ -17,6 +17,7 @@ import com.dbf.loadtester.player.config.Constants;
 import com.dbf.loadtester.player.config.PlayerOptions;
 import com.dbf.loadtester.player.jmx.PlayerManager;
 import com.dbf.loadtester.player.jmx.PlayerManagerMBean;
+import com.dbf.loadtester.player.server.PlayerServer;
 
 public class LoadTestPlayer
 {
@@ -40,8 +41,12 @@ public class LoadTestPlayer
 	{
 		try
 		{
+			//Build a management object that is shared across both the Web Server and JMX
 			config = new PlayerOptions(args);
-			registerMBean();
+			PlayerManagerMBean manager = new PlayerManager(config);
+			
+			registerMBean(manager);
+			startWebServer(manager);
 			
 			if(!config.isPauseOnStartup())
 			{
@@ -164,20 +169,35 @@ public class LoadTestPlayer
 		launcherThread.start();	
 	}
 	
-	private static void registerMBean()
+	private static void registerMBean(PlayerManagerMBean manager)
 	{
 		log.info("Attempting to register Player MBean...");
 		
 		try
 		{
-			PlayerManagerMBean manager = new PlayerManager(config);
 			ObjectName  mbeanName = new ObjectName("com.dbf.loadtester:name=" + manager.toString());
 			MBeanServer mbs = ManagementFactory.getPlatformMBeanServer();
 			mbs.registerMBean(manager, mbeanName);
+			
+			log.info("Player MBean successfully registered.");
 		}
-		catch(Exception e)
+		catch(Throwable e)
 		{
 			log.warn("Failed to register MBean. JMX monitoring will not be possible.", e);
+		}
+	}
+	
+	private static void startWebServer(PlayerManagerMBean manager)
+	{
+		log.info("Attempting to launch administrative web server...");
+		try
+		{
+			PlayerServer.initializeServer();
+			log.info("Administrative web server started.");
+		}
+		catch(Throwable e)
+		{
+			log.warn("Failed to launch administrative web server. Web based administration will not be possible.", e);
 		}
 	}
 

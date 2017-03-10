@@ -1,4 +1,4 @@
-package com.dbf.loadtester.recorder.proxy;
+package com.dbf.loadtester.recorder.proxy.server;
 
 import java.io.IOException;
 
