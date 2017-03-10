@@ -218,7 +218,7 @@ public class LoadTestThread implements Runnable
 			if(useSubstitutions) applySubstitutions(actionCopy);
 			
 			//Handle HTTPs override
-			if(overrideHttps) actionCopy.setScheme("https");
+			if(overrideHttps) actionCopy.setScheme("http");
 			
 			//Re-use HTTP Requests for better performance
 			try
