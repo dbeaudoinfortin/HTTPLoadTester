@@ -2,7 +2,6 @@ package com.dbf.loadtester.player;
 
 import java.net.URISyntaxException;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -17,7 +16,7 @@ import com.dbf.loadtester.common.action.HTTPAction;
 import com.dbf.loadtester.common.action.HTTPConverter;
 import com.dbf.loadtester.common.util.Utils;
 import com.dbf.loadtester.player.config.PlayerOptions;
-import com.dbf.loadtester.player.stats.ActionTime;
+import com.dbf.loadtester.player.stats.PlayerStats;
 
 public class LoadTestThread implements Runnable
 {
@@ -38,8 +37,7 @@ public class LoadTestThread implements Runnable
 	private final int httpsPort;
 	private final boolean overrideHttps;
 	private final List<HTTPAction> actions;
-	
-	private final Map<String, ActionTime> actionTimes = new HashMap<String, ActionTime>(100);
+	private final PlayerStats globalPlayerStats;
 	
 	public LoadTestThread(PlayerOptions config, int threadNumber, HttpClient httpClient)
 	{
@@ -52,7 +50,8 @@ public class LoadTestThread implements Runnable
 		this.httpPort = config.getHttpPort();
 		this.httpsPort = config.getHttpsPort();
 		this.overrideHttps = config.isOverrideHttps();
-		this.actions = initializeHTTPActions(config.getActions(), threadNumber);	
+		this.actions = initializeHTTPActions(config.getActions(), threadNumber);
+		this.globalPlayerStats = config.getGlobalPlayerStats();
 	}
 	
 	@Override
@@ -60,14 +59,15 @@ public class LoadTestThread implements Runnable
 	{
 		try
 		{
-			long startTime = System.currentTimeMillis();
 			int runCount = 0; 
-			startTime = (new Date()).getTime();
+			long threadStartTime = System.currentTimeMillis();
 			do
 			{
 				long lastActionTime = System.currentTimeMillis();
+				long testPlanStartTime = lastActionTime;
 				for(HTTPAction action : actions)
 				{
+					//Handle termination of the test plan via JMX/REST
 					if(!LoadTestPlayer.isRunning()) return;
 					
 					//By-pass Test Plan timings for debug purposes
@@ -90,17 +90,22 @@ public class LoadTestThread implements Runnable
 					Long duration =	runAction(action);
 					
 					if (null != duration)
-						recordActionTime(action.getPath(), duration);
+						globalPlayerStats.recordActionTime(action.getPath(), duration);
 				}
+				
+				//Record the time it took to execute the entire test plan
+				globalPlayerStats.recordTestPlanTime(System.currentTimeMillis() - testPlanStartTime);
+				
 				runCount++;
 			}
-			while((new Date()).getTime() - startTime < minRunTime);
+			//Ensure that the threads runs for at least its minimum run time
+			//Note that the thread will always run the test plan at least once.
+			while(System.currentTimeMillis() - threadStartTime < minRunTime);
 			
 			long endTime = System.currentTimeMillis();
-			double timeInMinutes = (endTime - startTime)/60000.0;
+			double timeInMinutes = (endTime - threadStartTime)/60000.0;
 			
- 			log.info("Thread " + threadNumber + " completed " + runCount + " run" + (runCount > 1 ? "s" : "") + " of the test plan in " + timeInMinutes + " minutes, including pauses." + (runCount > 1 ? " Average time " + timeInMinutes/runCount + " minutes, including pauses." : ""));
- 			printActionTimes();
+ 			log.info("Thread " + threadNumber + " completed " + runCount + " run" + (runCount > 1 ? "s" : "") + " of the test plan in " + timeInMinutes + " minutes, including pauses." + (runCount > 1 ? " Average test plan time " + timeInMinutes/runCount + " minutes, including pauses." : ""));
 		}
 		catch(InterruptedException e)
 		{
@@ -113,46 +118,6 @@ public class LoadTestThread implements Runnable
 		finally
 		{
 			LoadTestPlayer.threadComplete(Thread.currentThread());
-		}
-	}
-	
-	private void printActionTimes()
-	{
-		StringBuilder sb = new StringBuilder("Times for Thread ");
-		sb.append(threadNumber) ;
-		sb.append(":");
-
-		for (Map.Entry<String, ActionTime> entry : actionTimes.entrySet())
-		{
-			sb.append("\r");
-			sb.append(entry.getKey());
-			sb.append(" ");
-			sb.append(entry.getValue());
-		}
-		log.info(sb.toString());
-	}
-	
-	private void recordActionTime(String actionName, long time)
-	{
-		ActionTime actionTime = actionTimes.get(actionName);
-		
-		if (null == actionTime)
-		{
-			actionTime = new ActionTime();
-			actionTime.min = time;
-			actionTime.max = time;
-			actionTime.total = time;
-			actionTime.count = 1;
-			actionTime.average = time;
-			actionTimes.put(actionName, actionTime);
-		}
-		else
-		{
-			actionTime.total += time;
-			actionTime.count += 1;
-			actionTime.average = actionTime.total/actionTime.count;
-			actionTime.min = Math.min(time, actionTime.min);
-			actionTime.max = Math.max(time, actionTime.max);
 		}
 	}
 	

@@ -13,6 +13,7 @@ import org.apache.log4j.Logger;
 
 import com.dbf.loadtester.common.action.HTTPAction;
 import com.dbf.loadtester.common.json.JsonEncoder;
+import com.dbf.loadtester.player.stats.PlayerStats;
 
 public class PlayerOptions
 {
@@ -49,6 +50,7 @@ public class PlayerOptions
 	private boolean pauseOnStartup = false;
 	private boolean keepAlive = false;
 	private List<HTTPAction> actions;
+	private PlayerStats globalPlayerStats = new PlayerStats();
 
 	public PlayerOptions(){}
 
@@ -199,6 +201,9 @@ public class PlayerOptions
 			log.info("Using default minimum run time: " + String.format("%.2f",minRunTime/60000.0) + " minutes");
 		}
 		
+		//Clear out all existing stats
+		globalPlayerStats = new PlayerStats(actions);
+		
 		log.info("Test plan loaded. Total duration approx. " + String.format("%.2f",totalTestPlanTime/60000.0) + " minutes.");
 	}
 	
@@ -326,5 +331,10 @@ public class PlayerOptions
 	public boolean isKeepAlive()
 	{
 		return keepAlive;
+	}
+
+	public PlayerStats getGlobalPlayerStats()
+	{
+		return globalPlayerStats;
 	}
 }

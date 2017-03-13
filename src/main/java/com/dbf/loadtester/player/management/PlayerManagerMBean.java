@@ -1,5 +1,9 @@
-package com.dbf.loadtester.player.jmx;
+package com.dbf.loadtester.player.management;
 
+import java.util.Map;
+import com.dbf.loadtester.player.stats.TimeStats;
+
+//Interface specifically named for JMX
 public interface PlayerManagerMBean
 {
 	public boolean isRunning();
@@ -50,4 +54,9 @@ public interface PlayerManagerMBean
 
 	public void setOverrideHttps(boolean overrideHttps);
 	
+	public Map<String, TimeStats> getActionStats();
+	
+	public TimeStats getTestPlanStats();
+	
+	public TimeStats getAggregateActionStats();
 }

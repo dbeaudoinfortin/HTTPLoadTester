@@ -15,9 +15,9 @@ import org.apache.log4j.Logger;
 import com.dbf.loadtester.common.httpclient.HTTPClientFactory;
 import com.dbf.loadtester.player.config.Constants;
 import com.dbf.loadtester.player.config.PlayerOptions;
-import com.dbf.loadtester.player.jmx.PlayerManager;
-import com.dbf.loadtester.player.jmx.PlayerManagerMBean;
-import com.dbf.loadtester.player.server.PlayerServer;
+import com.dbf.loadtester.player.management.PlayerManager;
+import com.dbf.loadtester.player.management.PlayerManagerMBean;
+import com.dbf.loadtester.player.management.server.PlayerServer;
 
 public class LoadTestPlayer
 {
@@ -32,7 +32,6 @@ public class LoadTestPlayer
 			
 	/**
 	 * Run an existing test plan
-	 * 
 	 * 
 	 * @param args
 	 * @throws IOException
@@ -85,8 +84,10 @@ public class LoadTestPlayer
 				return;
 			}
 			
+			//Only load the test plan before starting the thread.
+			//because the test plan could have been change via JMX/REST
 			config.loadTestPlan();
-			
+
 			log.info("Launching worker threads...");
 			running = true;
 		}
@@ -192,7 +193,7 @@ public class LoadTestPlayer
 		log.info("Attempting to launch administrative web server...");
 		try
 		{
-			PlayerServer.initializeServer();
+			PlayerServer.initializeServer(manager);
 			log.info("Administrative web server started.");
 		}
 		catch(Throwable e)
@@ -216,15 +217,23 @@ public class LoadTestPlayer
 	
 	public static void threadComplete(Thread thread)
 	{
+		boolean allComplete = false;
 		synchronized(running)
 		{		
 			workerThreads.remove(thread);
 			if(!running) return;
 			if(workerThreads.size() < 1)
 			{
-				log.info("All worker threads done.");
+				allComplete = true;
 				running = false;
 			}
+		}
+		
+		//Log some useful stats
+		if(allComplete)
+		{
+			log.info("All worker threads done.");
+			log.info(config.getGlobalPlayerStats().printStatsSummary());
 		}
 	}
 }

@@ -1,12 +1,15 @@
-package com.dbf.loadtester.player.jmx;
+package com.dbf.loadtester.player.management;
 
 import java.io.File;
+import java.util.Map;
 
 import org.apache.log4j.Logger;
 
 import com.dbf.loadtester.player.LoadTestPlayer;
 import com.dbf.loadtester.player.config.PlayerOptions;
+import com.dbf.loadtester.player.stats.TimeStats;
 
+//Class specifically named for JMX
 public class PlayerManager implements PlayerManagerMBean
 {
 	private static final Logger log = Logger.getLogger(LoadTestPlayer.class);
@@ -178,6 +181,24 @@ public class PlayerManager implements PlayerManagerMBean
 	public void setOverrideHttps(boolean overrideHttps)
 	{
 		config.setOverrideHttps(overrideHttps);;
+	}
+
+	@Override
+	public Map<String, TimeStats> getActionStats()
+	{
+		return config.getGlobalPlayerStats().getActionStats();
+	}
+
+	@Override
+	public TimeStats getTestPlanStats()
+	{
+		return config.getGlobalPlayerStats().getTestPlanStats();
+	}
+	
+	@Override
+	public TimeStats getAggregateActionStats()
+	{
+		return config.getGlobalPlayerStats().getAggregateActionStats();
 	}
 	
 	@Override

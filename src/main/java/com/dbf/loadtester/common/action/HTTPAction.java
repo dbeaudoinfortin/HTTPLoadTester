@@ -22,6 +22,7 @@ public class HTTPAction implements Serializable
 	private String scheme;
 	private String queryString;
 	private Map<String, String> headers;
+	private transient String identifier;
 	private transient HttpRequestBase httpRequest;
 	
 	public HTTPAction(){}
@@ -40,6 +41,7 @@ public class HTTPAction implements Serializable
 		this.scheme = other.scheme;
 		this.queryString = other.queryString;
 		this.headers = other.headers;
+		this.identifier = other.getIdentifier(); //Must call getter
 	}
 	
 	public long getTimePassed()
@@ -166,17 +168,22 @@ public class HTTPAction implements Serializable
 		this.httpRequest = httpRequest;
 	}
 	
-	@Override
-	public String toString()
+	public String getIdentifier()
+	{
+		//The action identifier should simply be the description prior to applying any thread substitutions
+		//For this to work, it needs to be manually set prior to applying substitutions
+		if (null == identifier) identifier = getDescription();
+		return identifier;
+	}
+
+	public void setIdentifier(String identifier)
+	{
+		this.identifier = identifier;
+	}
+
+	private String getDescription()
 	{
 		StringBuilder sb = new StringBuilder();
-		
-		if(id > -1)
-		{
-			sb.append(id);
-			sb.append(":");
-		}
-		sb.append("[");
 		sb.append(getMethod());
 		sb.append(" ");
 		sb.append(scheme);
@@ -188,6 +195,21 @@ public class HTTPAction implements Serializable
 			sb.append("?");
 			sb.append(queryString);
 		}
+		return sb.toString();
+	}
+
+	@Override
+	public String toString()
+	{
+		StringBuilder sb = new StringBuilder();
+		
+		if(id > -1)
+		{
+			sb.append(id);
+			sb.append(":");
+		}
+		sb.append("[");
+		sb.append(getDescription());
 		sb.append("]");
 		return sb.toString();
 	}
