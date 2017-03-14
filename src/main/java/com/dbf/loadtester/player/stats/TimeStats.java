@@ -1,5 +1,7 @@
 package com.dbf.loadtester.player.stats;
 
+import java.util.Date;
+
 /**
  * Holds basic time based statistics.
  * 
@@ -8,12 +10,13 @@ package com.dbf.loadtester.player.stats;
  */
 public class TimeStats
 {
-	public long min = Long.MAX_VALUE;
-	public long max = Long.MIN_VALUE;
-	public long total;
-	public int count;
-	public double average;
-
+	private long min = Long.MAX_VALUE;
+	private long max = Long.MIN_VALUE;
+	private long total;
+	private int count;
+	private double average;
+	private Date lastUpdated;
+	
 	public void increment(long time)
 	{
 		total += time;
@@ -21,6 +24,7 @@ public class TimeStats
 		average = total/count;
 		min = Math.min(time, min);
 		max = Math.max(time, max);
+		lastUpdated = new Date();
 	}
 	
 	public TimeStats clone()
@@ -31,6 +35,7 @@ public class TimeStats
 		clone.average = average;
 		clone.min = min;
 		clone.max = max;
+		clone.lastUpdated = lastUpdated;
 		return clone;
 	}
 	

@@ -18,9 +18,18 @@ public class ManagementEndpoint
 	}
 	
 	@GET
+	@Path("/running")
 	@Produces({ MediaType.APPLICATION_JSON })
-	public Boolean isRunning()
+	public Boolean running()
 	{
 		return manager.isRunning();
+	}
+	
+	@GET
+	@Path("/runningThreadCount")
+	@Produces({ MediaType.APPLICATION_JSON })
+	public Integer runningThreadCount()
+	{
+		return manager.getRunningThreadCount();
 	}
 }
