@@ -27,8 +27,6 @@ public class LoadTestPlayer
 			log.error("Failed to load player configuration.", e);
 			return;
 		}
-		
-		
 	}
 
 }

@@ -9,12 +9,15 @@ import java.util.regex.Pattern;
 
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
+import org.apache.http.client.CookieStore;
 import org.apache.http.client.HttpClient;
-
+import org.apache.http.client.methods.HttpRequestBase;
+import org.apache.http.impl.client.BasicCookieStore;
 import com.dbf.loadtester.common.action.HTTPAction;
 import com.dbf.loadtester.common.action.HTTPConverter;
 import com.dbf.loadtester.common.util.Utils;
 import com.dbf.loadtester.player.config.PlayerOptions;
+import com.dbf.loadtester.player.cookie.CookieHandler;
 import com.dbf.loadtester.player.stats.PlayerStats;
 
 import org.slf4j.Logger;
@@ -26,8 +29,9 @@ public class LoadTestThread implements Runnable
 	
 	private static final String THREAD_ID_PARAM = "<THREAD_ID>";
 	private static final Pattern THREAD_ID_PARAM_PATTERN = Pattern.compile(THREAD_ID_PARAM);
-	
+
 	private Map<Pattern, String> substitutions;
+	private final CookieStore cookieStore = new BasicCookieStore();
 	
 	private final HttpClient httpClient;	
 	private final int threadNumber;
@@ -41,6 +45,8 @@ public class LoadTestThread implements Runnable
 	private final List<HTTPAction> actions;
 	private final PlayerStats globalPlayerStats;
 	private final LoadTestCoordinator master;
+	
+	
 	
 	public LoadTestThread(LoadTestCoordinator master, PlayerOptions config, int threadNumber, HttpClient httpClient)
 	{
@@ -67,38 +73,14 @@ public class LoadTestThread implements Runnable
 			long threadStartTime = System.currentTimeMillis();
 			do
 			{
-				long lastActionTime = System.currentTimeMillis();
-				long testPlanStartTime = lastActionTime;
-				for(HTTPAction action : actions)
-				{
-					//Handle termination of the test plan via JMX/REST
-					if(!master.isRunning()) return;
-					
-					//By-pass Test Plan timings for debug purposes
-					long waitTime = (actionDelay < 0 ? action.getTimePassed() : actionDelay);
-					
-					//Ensure that the start time of every action matches the timings in the test plan
-					long currentTime = System.currentTimeMillis();
-					while(currentTime - lastActionTime < waitTime)
-					{
-						if(!master.isRunning()) return;
-						Thread.sleep(10);
-						currentTime = System.currentTimeMillis();
-					}
-					
-					lastActionTime = currentTime;
-					
-					//Run the action and store the duration
-					//Not that the duration is the server response time including network delay
-					//It does not include the overhead of this thread
-					Long duration =	runAction(action);
-					
-					if (null != duration)
-						globalPlayerStats.recordActionTime(action.getIdentifier(), duration);
-				}
+				long testPlanStartTime = System.currentTimeMillis();
+				runTestPlan();
 				
 				//Record the time it took to execute the entire test plan
 				globalPlayerStats.recordTestPlanTime(System.currentTimeMillis() - testPlanStartTime);
+				
+				//After every test plan, we need to clear the cookies
+				cookieStore.clear();
 				
 				runCount++;
 			}
@@ -125,6 +107,39 @@ public class LoadTestThread implements Runnable
 		}
 	}
 	
+	private void runTestPlan() throws Exception
+	{
+		long lastActionTime = System.currentTimeMillis();
+		
+		for(HTTPAction action : actions)
+		{
+			//Handle termination of the test plan via JMX/REST
+			if(!master.isRunning()) return;
+			
+			//By-pass Test Plan timings for debug purposes
+			long waitTime = (actionDelay < 0 ? action.getTimePassed() : actionDelay);
+			
+			//Ensure that the start time of every action matches the timings in the test plan
+			long currentTime = System.currentTimeMillis();
+			while(currentTime - lastActionTime < waitTime)
+			{
+				if(!master.isRunning()) return;
+				Thread.sleep(10);
+				currentTime = System.currentTimeMillis();
+			}
+			
+			lastActionTime = currentTime;
+			
+			//Run the action and store the duration
+			//Not that the duration is the server response time including network delay
+			//It does not include the overhead of this thread
+			Long duration =	runAction(action);
+			
+			if (null != duration)
+				globalPlayerStats.recordActionTime(action.getIdentifier(), duration);
+		}
+	}
+	
 	private Long runAction(HTTPAction action) throws Exception
 	{
 		if(null == action.getHttpRequest())
@@ -136,16 +151,23 @@ public class LoadTestThread implements Runnable
 		long startTime;
 		long endTime;
 		HttpResponse response = null;
+		HttpRequestBase request = action.getHttpRequest();
 		try
 		{
+			//Apply any relevant non-expired cookies
+			CookieHandler.applyCookies(cookieStore, action.getCookieOrigin(), request);
+			
     		startTime = System.currentTimeMillis();
-    		response = httpClient.execute(action.getHttpRequest());
+    		response = httpClient.execute(request);
     		
     		//Consume the response body fully so that  the connection can be reused
     		HttpEntity entity = response.getEntity();
     		if(null != entity) Utils.discardStream(entity.getContent());
 
     		endTime = System.currentTimeMillis();
+    		
+    		//Store any cookies for subsequent calls
+    		CookieHandler.storeCookie(cookieStore, action.getCookieOrigin(), response);
 		}
 		catch(Exception e)
 		{
@@ -155,7 +177,7 @@ public class LoadTestThread implements Runnable
     	finally
 		{
     		//Release connection and make it reusable
-    		action.getHttpRequest().releaseConnection();
+    		request.releaseConnection();
 		}
 		
 		log.info("Thread " + threadNumber + " recieved HTTP code " + response.getStatusLine().getStatusCode() + " for action " + action + ".");
@@ -198,6 +220,10 @@ public class LoadTestThread implements Runnable
 			{
 				throw new RuntimeException("Failed to convert HTTP Action " + source, e);
 			}
+			
+			//Pre-compute the cookie origin for each request
+			boolean isSecure = actionCopy.getScheme().equalsIgnoreCase("https");
+			actionCopy.setCookieOrigin(CookieHandler.determineCookieOrigin(host, httpPort, actionCopy.getPath(), isSecure));
 		}
 		return returnList;
 	}

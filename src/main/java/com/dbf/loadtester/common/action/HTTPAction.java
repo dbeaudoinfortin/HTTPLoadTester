@@ -5,6 +5,7 @@ import java.util.Date;
 import java.util.Map;
 
 import org.apache.http.client.methods.HttpRequestBase;
+import org.apache.http.cookie.CookieOrigin;
 
 public class HTTPAction implements Serializable
 {
@@ -24,6 +25,7 @@ public class HTTPAction implements Serializable
 	private Map<String, String> headers;
 	private transient String identifier;
 	private transient HttpRequestBase httpRequest;
+	private transient CookieOrigin cookieOrigin;
 	
 	public HTTPAction(){}
 	
@@ -196,6 +198,16 @@ public class HTTPAction implements Serializable
 			sb.append(queryString);
 		}
 		return sb.toString();
+	}
+
+	public CookieOrigin getCookieOrigin()
+	{
+		return cookieOrigin;
+	}
+
+	public void setCookieOrigin(CookieOrigin cookieOrigin)
+	{
+		this.cookieOrigin = cookieOrigin;
 	}
 
 	@Override
