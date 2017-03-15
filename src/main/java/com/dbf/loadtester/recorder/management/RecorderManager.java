@@ -1,4 +1,4 @@
-package com.dbf.loadtester.recorder.jmx;
+package com.dbf.loadtester.recorder.management;
 
 import java.io.IOException;
 import java.nio.file.Path;

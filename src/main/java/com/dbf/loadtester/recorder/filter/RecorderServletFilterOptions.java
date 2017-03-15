@@ -6,6 +6,9 @@ public class RecorderServletFilterOptions
 {
 	private String testPlanDirectory;
 	private boolean immediateStart;
+	private boolean enableREST ;
+	private boolean enableJMX;
+	private int restPort;
 	
 	private Map<String, String> pathSubs;
 	private Map<String, String> querySubs;
@@ -88,6 +91,54 @@ public class RecorderServletFilterOptions
 	public RecorderServletFilterOptions withBodySubs(Map<String, String> bodySubs)
 	{
 		this.bodySubs = bodySubs;
+		return this;
+	}
+
+	public boolean isEnableREST()
+	{
+		return enableREST;
+	}
+
+	public void setEnableREST(boolean enableREST)
+	{
+		this.enableREST = enableREST;
+	}
+
+	public boolean isEnableJMX()
+	{
+		return enableJMX;
+	}
+
+	public void setEnableJMX(boolean enableJMX)
+	{
+		this.enableJMX = enableJMX;
+	}
+
+	public int getRestPort()
+	{
+		return restPort;
+	}
+
+	public void setRestPort(int restPort)
+	{
+		this.restPort = restPort;
+	}
+	
+	public RecorderServletFilterOptions withRestPort(int restPort)
+	{
+		this.restPort = restPort;
+		return this;
+	}
+	
+	public RecorderServletFilterOptions withEnableREST(boolean enable)
+	{
+		this.enableREST = enable;
+		return this;
+	}
+	
+	public RecorderServletFilterOptions withEnableJMX(boolean enable)
+	{
+		this.enableJMX = enable;
 		return this;
 	}
 }

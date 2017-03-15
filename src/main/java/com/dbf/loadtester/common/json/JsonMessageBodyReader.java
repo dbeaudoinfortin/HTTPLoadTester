@@ -1,4 +1,4 @@
-package com.dbf.loadtester.player.management.server;
+package com.dbf.loadtester.common.json;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -11,8 +11,6 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.ext.MessageBodyReader;
 import javax.ws.rs.ext.Provider;
-
-import com.dbf.loadtester.common.json.JsonEncoder;
 
 @Provider
 @Consumes({MediaType.APPLICATION_JSON})

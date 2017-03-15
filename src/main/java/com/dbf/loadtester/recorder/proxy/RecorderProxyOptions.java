@@ -13,6 +13,7 @@ import org.apache.commons.cli.ParseException;
 import org.apache.commons.codec.binary.Base64;
 
 import com.dbf.loadtester.common.json.JsonEncoder;
+import com.dbf.loadtester.player.config.Constants;
 import com.google.gson.JsonSyntaxException;
 
 public class RecorderProxyOptions
@@ -31,15 +32,21 @@ public class RecorderProxyOptions
 		options.addOption("pathSubs", true, "Path Substitutions in Base64 encoded Json format");
 		options.addOption("querySubs", true, "Query Substitutions in Base64 encoded Json format");
 		options.addOption("bodySubs", true, "Body Substitutions in Base64 encoded Json format");
+		options.addOption("restPort", true, "Port to use for REST API managment interface.");
+		options.addOption("disableREST", false, "Disable the REST API managment interface.");
+		options.addOption("disableJMX", false, "Disable the JMX managment interface.");
 	}
 
 	private String directory;
 	private Integer httpPort;
 	private Integer httpsPort;
 	private String forwardHost;
-	private Integer forwardHTTPPort = 80;
-	private Integer forwardHTTPSPort = 443;
+	private Integer forwardHTTPPort = Constants.DEFAULT_FORWARD_HTTP_PORT;
+	private Integer forwardHTTPSPort = Constants.DEFAULT_FORWARD_HTTPS_PORT;
 	private boolean immediateStart;
+	private Integer restPort = Constants.DEFAULT_RECORDER_REST_PORT;
+	private boolean disableREST = false;
+	private boolean disableJMX = false;
 	
 	private Map<String, String> pathSubs;
 	private Map<String, String> querySubs;
@@ -58,12 +65,27 @@ public class RecorderProxyOptions
 		}
 		
 		immediateStart = cmd.hasOption("start");
+		
+		disableREST = cmd.hasOption("disableREST");
+		disableJMX = cmd.hasOption("disableJMX");
 				
 		directory = cmd.getOptionValue("dir");
 		
 		if(null != directory && !Files.isDirectory(Paths.get(directory)))
 			throw new IllegalArgumentException("Invalid test plan directory.");
 	
+		try
+		{
+			String portString = cmd.getOptionValue("restPort");
+			if(portString != null) restPort = Integer.parseInt(portString);
+		}
+		catch (NumberFormatException e)
+		{
+			throw new IllegalArgumentException("Invalid REST API managment port number.");
+		}
+		
+		if(null != restPort && restPort < 0) throw new IllegalArgumentException("Invalid REST API managment port number.");
+		
 		try
 		{
 			String portString = cmd.getOptionValue("httpPort");
@@ -238,5 +260,20 @@ public class RecorderProxyOptions
 	public void setBodySubs(Map<String, String> bodySubs)
 	{
 		this.bodySubs = bodySubs;
+	}
+
+	public Integer getRestPort()
+	{
+		return restPort;
+	}
+
+	public boolean isDisableREST()
+	{
+		return disableREST;
+	}
+
+	public boolean isDisableJMX()
+	{
+		return disableJMX;
 	}
 }

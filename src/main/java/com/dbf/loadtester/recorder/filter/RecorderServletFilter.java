@@ -16,8 +16,9 @@ import javax.servlet.http.HttpServletRequest;
 import org.apache.log4j.Logger;
 
 import com.dbf.loadtester.recorder.RecorderBase;
-import com.dbf.loadtester.recorder.jmx.RecorderManager;
-import com.dbf.loadtester.recorder.jmx.RecorderManagerMBean;
+import com.dbf.loadtester.recorder.management.RecorderManager;
+import com.dbf.loadtester.recorder.management.RecorderManagerMBean;
+import com.dbf.loadtester.recorder.management.server.RecorderManagementServer;
 
 /**
  * Servlet Filter version of the recorder.
@@ -69,8 +70,9 @@ public class RecorderServletFilter extends RecorderBase implements Filter
 			}
 		}
 		
-		//Register MBean once the options are set but before starting the recording
-		registerMBean();
+		//Register management once the options are set but before starting the recording
+		initManagement();
+		
 		log.info("HTTP Load Test Recorder Filter initialization complete.");
 		
 		//Start only if configured for immediate start
@@ -88,6 +90,13 @@ public class RecorderServletFilter extends RecorderBase implements Filter
 		}
 	}
 	
+	private void initManagement()
+	{
+		RecorderManagerMBean manager = new RecorderManager(this);
+		if(options.isEnableJMX()) registerMBean(manager);
+		if(options.isEnableREST()) RecorderManagementServer.initializeServer(manager, options.getRestPort());
+	}
+	
 	public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException 
     {	
 		if(request instanceof HttpServletRequest)
@@ -99,20 +108,19 @@ public class RecorderServletFilter extends RecorderBase implements Filter
 	public void destroy(){
 	}
 	
-	private void registerMBean()
+	private void registerMBean(RecorderManagerMBean manager)
 	{
 		log.info("Attempting to register Recorder Filter MBean...");
 		
 		try
 		{
-			RecorderManagerMBean manager = new RecorderManager(this);
 			ObjectName  mbeanName = new ObjectName("com.dbf.loadtester:name=" + manager.toString());
 			MBeanServer mbs = ManagementFactory.getPlatformMBeanServer();
 			mbs.registerMBean(manager, mbeanName);
 		}
 		catch(Exception e)
 		{
-			log.warn("Failed to register MBean. JMX monitoring will not be possible.", e);
+			log.warn("Failed to register MBean. JMX management will not be possible.", e);
 		}
 	}
 }

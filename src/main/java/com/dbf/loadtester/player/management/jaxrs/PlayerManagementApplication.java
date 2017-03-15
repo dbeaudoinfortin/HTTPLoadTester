@@ -9,11 +9,11 @@ import javax.ws.rs.core.Application;
 import com.dbf.loadtester.player.management.PlayerManagerMBean;
 
 @ApplicationPath("/")
-public class ManagementApplication extends Application
+public class PlayerManagementApplication extends Application
 {
 	private final PlayerManagerMBean manager;
 	
-	public ManagementApplication (PlayerManagerMBean manager)
+	public PlayerManagementApplication (PlayerManagerMBean manager)
 	{
 		this.manager = manager;
 	}
@@ -22,7 +22,7 @@ public class ManagementApplication extends Application
 	public Set<Object> getSingletons()
 	{
 		Set<Object> singletons = new HashSet<Object>();
-		singletons.add(new ManagementEndpoint(manager));
+		singletons.add(new PlayerManagementEndpoint(manager));
 		return singletons;
 	}
 }

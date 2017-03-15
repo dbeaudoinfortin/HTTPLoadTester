@@ -35,6 +35,9 @@ public class PlayerOptions
 		options.addOption("keepAlive", false, "Keep Load Test Player alive after all threads have halted.");
 		options.addOption("overrideHttps", false, "Override all HTTPs actions with HTTP");
 		options.addOption("applySubs", false, "Apply variable substitutions, such as <THREAD_ID>, in the test plan.");
+		options.addOption("restPort", true, "Port to use for REST API managment interface.");
+		options.addOption("disableREST", false, "Disable the REST API managment interface.");
+		options.addOption("disableJMX", false, "Disable the JMX managment interface.");
 	}
 	
 	private String host = Constants.DEFAULT_HOST;
@@ -45,10 +48,13 @@ public class PlayerOptions
 	private int actionDelay = Constants.DEFAULT_TIME_BETWEEN_ACTIONS;
 	private boolean useSubstitutions = false;
 	private long minRunTime = Constants.DEFAULT_MINIMUM_RUN_TIME;
+	private int restPort = Constants.DEFAULT_PLAYER_REST_PORT;
 	private File testPlanFile;
 	private boolean overrideHttps = false;
 	private boolean pauseOnStartup = false;
 	private boolean keepAlive = false;
+	private boolean disableREST = false;
+	private boolean disableJMX = false;
 	private List<HTTPAction> actions;
 	private PlayerStats globalPlayerStats = new PlayerStats();
 
@@ -99,6 +105,18 @@ public class PlayerOptions
 		{
 			useSubstitutions = true;
 			log.info("Substitutions will be applied to the Test Plan.");
+		}
+		
+		if(cmd.hasOption("disableREST"))
+		{
+			disableREST = true;
+			log.info("Disable REST flag set, REST management will not be availible.");
+		}
+		
+		if(cmd.hasOption("disableJMX"))
+		{
+			disableJMX = true;
+			log.info("Disable JMX flag set, JMX management will not be availible.");
 		}
 		
 		if(cmd.hasOption("threadCount"))
@@ -167,6 +185,16 @@ public class PlayerOptions
 		{
 			log.info("Using default HTTPS port: " + Constants.DEFAULT_HTTPS_PORT);
 		}
+		
+		if(cmd.hasOption("restPort"))
+		{
+			restPort = Integer.parseInt(cmd.getOptionValue("restPort"));
+			log.info("Using management REST API port: " + restPort);
+		}
+		else
+		{
+			log.info("Using default management REST API port: " + Constants.DEFAULT_PLAYER_REST_PORT);
+		}
 	}
 	
 	private void validate() throws IllegalArgumentException, IOException
@@ -178,6 +206,7 @@ public class PlayerOptions
 		if(host == null || host.isEmpty()) throw new IllegalArgumentException("Invalid host.");	
 		if(httpPort < 1) throw new IllegalArgumentException("Invalid HTTP port.");
 		if(httpsPort < 1) throw new IllegalArgumentException("Invalid HTTPS port.");	
+		if(restPort < 1) throw new IllegalArgumentException("Invalid management REST API port.");	
 	}
 	
 	public void loadTestPlan() throws IOException, IllegalArgumentException
@@ -336,5 +365,20 @@ public class PlayerOptions
 	public PlayerStats getGlobalPlayerStats()
 	{
 		return globalPlayerStats;
+	}
+	
+	public int getRestPort()
+	{
+		return restPort;
+	}
+
+	public boolean isDisableREST()
+	{
+		return disableREST;
+	}
+
+	public boolean isDisableJMX()
+	{
+		return disableJMX;
 	}
 }

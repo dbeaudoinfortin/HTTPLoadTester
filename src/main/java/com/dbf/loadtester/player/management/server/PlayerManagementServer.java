@@ -6,8 +6,11 @@ import javax.ws.rs.core.Application;
 import org.jboss.resteasy.plugins.server.servlet.HttpServlet30Dispatcher;
 import org.jboss.resteasy.spi.ResteasyDeployment;
 
+import com.dbf.loadtester.common.json.JsonMessageBodyReader;
+import com.dbf.loadtester.common.json.JsonMessageBodyWriter;
+import com.dbf.loadtester.player.config.PlayerOptions;
 import com.dbf.loadtester.player.management.PlayerManagerMBean;
-import com.dbf.loadtester.player.management.jaxrs.ManagementApplication;
+import com.dbf.loadtester.player.management.jaxrs.PlayerManagementApplication;
 
 import io.undertow.Undertow;
 import io.undertow.server.HttpHandler;
@@ -15,14 +18,12 @@ import io.undertow.servlet.Servlets;
 import io.undertow.servlet.api.DeploymentInfo;
 import io.undertow.servlet.api.DeploymentManager;
 
-public class PlayerServer
+public class PlayerManagementServer
 {
-	private static final int ADMIN_SERVER_PORT = 5009;
-	
-	public static void initializeServer(PlayerManagerMBean manager) throws Exception
+	public static void initializeServer(PlayerManagerMBean manager, PlayerOptions config) throws Exception
 	{		
 		Undertow server = Undertow.builder()
-                .addHttpListener(ADMIN_SERVER_PORT, "localhost")
+                .addHttpListener(config.getRestPort(), "localhost")
                 .setHandler(buildDeploymentManager(manager)).build();
 		
 		server.start();
@@ -31,7 +32,7 @@ public class PlayerServer
 	private static HttpHandler buildDeploymentManager(PlayerManagerMBean manager) throws ServletException
 	{
         DeploymentInfo servletBuilder = Servlets.deployment()
-                .setClassLoader(PlayerServer.class.getClassLoader())
+                .setClassLoader(PlayerManagementServer.class.getClassLoader())
                 .setDeploymentName("PlayerManagementServer")
                 .setContextPath("/")
                 .addServlets(
@@ -49,7 +50,7 @@ public class PlayerServer
 
 	public static ResteasyDeployment getDeployment(PlayerManagerMBean manager)
 	{
-		Application application = new ManagementApplication(manager);
+		Application application = new PlayerManagementApplication(manager);
 		ResteasyDeployment deployment = new ResteasyDeployment();
 		deployment.setApplication(application);
 		deployment.getProviders().add(new JsonMessageBodyReader());

@@ -2,9 +2,7 @@ package com.dbf.loadtester.recorder.proxy.server;
 
 import javax.servlet.DispatcherType;
 import javax.servlet.ServletException;
-
 import org.apache.log4j.Logger;
-
 import com.dbf.loadtester.common.util.SSLUtil;
 import com.dbf.loadtester.recorder.filter.RecorderServletFilter;
 import com.dbf.loadtester.recorder.filter.RecorderServletFilterFactory;
@@ -24,28 +22,33 @@ public class RecorderProxyServer
 	
 	public static void initializeServer(RecorderProxyOptions options)
 	{
-		log.info("Attempting to start Recorder Proxy Server...");
+		log.info("Attempting to start Recorder Proxy server...");
 		
-		Undertow server = null;
 		try
 		{
-			server = Undertow.builder()
-	                .addHttpListener(options.getHttpPort(), "localhost")
-	                .addHttpsListener(options.getHttpsPort(), "localhost", SSLUtil.buildSSLContext())
-	                .setHandler(buildHttpHandler(options)).build();
+			initializeProxyServer(options);
 		} 
 		catch(Throwable t)
 		{
-			log.error("Failed to initialize server.", t);
+			log.error("Failed to initialize Recorder Proxy server.", t);
 			return;
 		}
 		
-		server.start();
-		
-		log.info("Recorder Proxy Server started.");
+		log.info("Recorder Proxy server started.");
 	}
 	
-	private static HttpHandler buildHttpHandler(RecorderProxyOptions options) throws ServletException
+	private static void initializeProxyServer(RecorderProxyOptions options) throws Exception
+	{
+		Undertow server = Undertow.builder()
+	                .addHttpListener(options.getHttpPort(), "localhost")
+	                .addHttpsListener(options.getHttpsPort(), "localhost", SSLUtil.buildSSLContext())
+	                .setHandler(buildProxyHttpHandler(options)).build();
+		
+		
+		server.start();
+	}
+	
+	private static HttpHandler buildProxyHttpHandler(RecorderProxyOptions options) throws ServletException
 	{
         DeploymentInfo servletBuilder = Servlets.deployment()
                 .setClassLoader(RecorderProxyServer.class.getClassLoader())
@@ -75,7 +78,10 @@ public class RecorderProxyServer
 				.withTestPlanDirectory(options.getDirectory())
 				.withPathSubs(options.getPathSubs())
 				.withQuerySubs(options.getQuerySubs())
-				.withBodySubs(options.getBodySubs())));
+				.withBodySubs(options.getBodySubs())
+				.withEnableJMX(!options.isDisableJMX())
+				.withEnableREST(!options.isDisableREST())
+				.withRestPort(options.getRestPort())));
 		return filter;
 	}
 }

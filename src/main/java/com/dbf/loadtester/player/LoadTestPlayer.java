@@ -17,7 +17,7 @@ import com.dbf.loadtester.player.config.Constants;
 import com.dbf.loadtester.player.config.PlayerOptions;
 import com.dbf.loadtester.player.management.PlayerManager;
 import com.dbf.loadtester.player.management.PlayerManagerMBean;
-import com.dbf.loadtester.player.management.server.PlayerServer;
+import com.dbf.loadtester.player.management.server.PlayerManagementServer;
 
 public class LoadTestPlayer
 {
@@ -44,8 +44,8 @@ public class LoadTestPlayer
 			config = new PlayerOptions(args);
 			PlayerManagerMBean manager = new PlayerManager(config);
 			
-			registerMBean(manager);
-			startWebServer(manager);
+			if (!config.isDisableJMX()) registerMBean(manager);
+			if (!config.isDisableREST()) startWebServer(manager, config);
 			
 			if(!config.isPauseOnStartup())
 			{
@@ -188,12 +188,12 @@ public class LoadTestPlayer
 		}
 	}
 	
-	private static void startWebServer(PlayerManagerMBean manager)
+	private static void startWebServer(PlayerManagerMBean manager, PlayerOptions config)
 	{
 		log.info("Attempting to launch administrative web server...");
 		try
 		{
-			PlayerServer.initializeServer(manager);
+			PlayerManagementServer.initializeServer(manager, config);
 			log.info("Administrative web server started.");
 		}
 		catch(Throwable e)

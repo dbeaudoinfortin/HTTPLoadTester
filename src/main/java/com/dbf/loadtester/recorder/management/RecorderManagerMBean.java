@@ -1,4 +1,4 @@
-package com.dbf.loadtester.recorder.jmx;
+package com.dbf.loadtester.recorder.management;
 
 public interface RecorderManagerMBean
 {
