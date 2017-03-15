@@ -6,6 +6,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import com.dbf.loadtester.common.action.HTTPAction;
+import com.dbf.loadtester.common.util.Utils;
 
 public class PlayerStats
 {
@@ -50,18 +51,22 @@ public class PlayerStats
 	public String printStatsSummary()
 	{
 		StringBuilder sb = new StringBuilder();
-		sb.append("\rOverall Test Plan Stats: ");
+		sb.append(Utils.NEW_LINE);
+		sb.append("Overall Test Plan Stats: ");
 		synchronized (testPlanTime) { sb.append(testPlanTime); }
 		
-		sb.append("\rAggregate stats for all actions across all threads: ");
+		sb.append(Utils.NEW_LINE);
+		sb.append("Aggregate stats for all actions across all threads: ");
 		synchronized (aggregateActionTime) { sb.append(aggregateActionTime); }
 		
-		sb.append("\r\rIndividual stats for all actions across all threads: ");
+		sb.append(Utils.NEW_LINE);
+		sb.append(Utils.NEW_LINE);
+		sb.append("Individual stats for all actions across all threads: ");
 		for (Map.Entry<String, TimeStats> actionTime : actionTimes.entrySet())
 		{
 			synchronized (actionTime)
 			{
-				sb.append("\r");
+				sb.append(Utils.NEW_LINE);
 				sb.append(actionTime.getKey());
 				sb.append(" ");
 				sb.append(actionTime.getValue());

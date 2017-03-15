@@ -13,6 +13,7 @@ import ch.qos.logback.classic.LoggerContext;
 
 public class Utils
 {	
+	public static final String NEW_LINE = System.getProperty("line.separator");
 	private static Boolean isWindows;
 	
 	public static boolean isWindows()
