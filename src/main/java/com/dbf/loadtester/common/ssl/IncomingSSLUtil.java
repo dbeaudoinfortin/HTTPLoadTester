@@ -1,4 +1,4 @@
-package com.dbf.loadtester.common.util;
+package com.dbf.loadtester.common.ssl;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -16,7 +16,7 @@ import javax.net.ssl.TrustManagerFactory;
 
 import org.apache.commons.codec.binary.Base64;
 
-public class SSLUtil
+public class IncomingSSLUtil
 {
 	private static final String DUMMY_KEYSTORE =  "/u3+7QAAAAIAAAABAAAAAQAKc2VsZnNpZ25lZAAAAVSf6kLSAAAFAjCCBP4wDgYKKwYBBAEqAhEBAQUABIIE6prlRncwWQ2CEzfW"
 												+ "PXjxU90Ne7NVvpOkLSXdnzfT3zILxL3Z38ytcHcFxstJiAfp/O00WrE0Ib5PRXNaHarcWI1p7oCJrZ8SLIgeXwh9NHfbjizSDiBw"

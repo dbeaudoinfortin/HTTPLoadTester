@@ -2,7 +2,8 @@ package com.dbf.loadtester.recorder.proxy.server;
 
 import javax.servlet.DispatcherType;
 import javax.servlet.ServletException;
-import com.dbf.loadtester.common.util.SSLUtil;
+
+import com.dbf.loadtester.common.ssl.IncomingSSLUtil;
 import com.dbf.loadtester.recorder.filter.RecorderServletFilter;
 import com.dbf.loadtester.recorder.filter.RecorderServletFilterFactory;
 import com.dbf.loadtester.recorder.filter.RecorderServletFilterOptions;
@@ -43,7 +44,7 @@ public class RecorderProxyServer
 	{
 		Undertow server = Undertow.builder()
 	                .addHttpListener(options.getHttpPort(), "localhost")
-	                .addHttpsListener(options.getHttpsPort(), "localhost", SSLUtil.buildSSLContext())
+	                .addHttpsListener(options.getHttpsPort(), "localhost", IncomingSSLUtil.buildSSLContext())
 	                .setHandler(buildProxyHttpHandler(options)).build();
 		
 		
