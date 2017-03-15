@@ -16,15 +16,17 @@ import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpRequestBase;
-import org.apache.log4j.Logger;
 
 import com.dbf.loadtester.common.action.HTTPConverter;
 import com.dbf.loadtester.common.httpclient.HTTPClientFactory;
 import com.dbf.loadtester.recorder.RecorderHttpServletRequestWrapper;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public class RecorderProxyServlet implements Servlet
 {
-	private static final Logger log = Logger.getLogger(RecorderProxyServlet.class);
+	private static final Logger log = LoggerFactory.getLogger(RecorderProxyServlet.class);
 	
 	public static final int MAX_CONNECTIONS = 20;
 	public static final String PARAM_PROXY_HTTP_PORT = "proxyHTTPPort";

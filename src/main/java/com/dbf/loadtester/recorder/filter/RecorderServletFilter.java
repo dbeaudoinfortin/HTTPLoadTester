@@ -13,12 +13,13 @@ import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 
-import org.apache.log4j.Logger;
-
 import com.dbf.loadtester.recorder.RecorderBase;
 import com.dbf.loadtester.recorder.management.RecorderManager;
 import com.dbf.loadtester.recorder.management.RecorderManagerMBean;
 import com.dbf.loadtester.recorder.management.server.RecorderManagementServer;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Servlet Filter version of the recorder.
@@ -26,7 +27,7 @@ import com.dbf.loadtester.recorder.management.server.RecorderManagementServer;
  */
 public class RecorderServletFilter extends RecorderBase implements Filter
 {
-	private static final Logger log = Logger.getLogger(RecorderServletFilter.class);
+	private static final Logger log = LoggerFactory.getLogger(RecorderServletFilter.class);
 
 	public static final String PARAM_DIRECTORY_PATH = "TestPlanDirectory";
 	public static final String PARAM_IMMEDIATE_START = "Start";

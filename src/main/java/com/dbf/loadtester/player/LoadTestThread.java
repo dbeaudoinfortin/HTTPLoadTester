@@ -10,7 +10,6 @@ import java.util.regex.Pattern;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
-import org.apache.log4j.Logger;
 
 import com.dbf.loadtester.common.action.HTTPAction;
 import com.dbf.loadtester.common.action.HTTPConverter;
@@ -18,9 +17,12 @@ import com.dbf.loadtester.common.util.Utils;
 import com.dbf.loadtester.player.config.PlayerOptions;
 import com.dbf.loadtester.player.stats.PlayerStats;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public class LoadTestThread implements Runnable
 {
-	private static final Logger log = Logger.getLogger(LoadTestThread.class);
+	private static final Logger log = LoggerFactory.getLogger(LoadTestThread.class);
 	
 	private static final String THREAD_ID_PARAM = "<THREAD_ID>";
 	private static final Pattern THREAD_ID_PARAM_PATTERN = Pattern.compile(THREAD_ID_PARAM);
@@ -38,8 +40,9 @@ public class LoadTestThread implements Runnable
 	private final boolean overrideHttps;
 	private final List<HTTPAction> actions;
 	private final PlayerStats globalPlayerStats;
+	private final LoadTestCoordinator master;
 	
-	public LoadTestThread(PlayerOptions config, int threadNumber, HttpClient httpClient)
+	public LoadTestThread(LoadTestCoordinator master, PlayerOptions config, int threadNumber, HttpClient httpClient)
 	{
 		this.threadNumber = threadNumber;
 		this.httpClient = httpClient;
@@ -52,6 +55,7 @@ public class LoadTestThread implements Runnable
 		this.overrideHttps = config.isOverrideHttps();
 		this.actions = initializeHTTPActions(config.getActions(), threadNumber);
 		this.globalPlayerStats = config.getGlobalPlayerStats();
+		this.master = master;
 	}
 	
 	@Override
@@ -68,7 +72,7 @@ public class LoadTestThread implements Runnable
 				for(HTTPAction action : actions)
 				{
 					//Handle termination of the test plan via JMX/REST
-					if(!LoadTestPlayer.isRunning()) return;
+					if(!master.isRunning()) return;
 					
 					//By-pass Test Plan timings for debug purposes
 					long waitTime = (actionDelay < 0 ? action.getTimePassed() : actionDelay);
@@ -77,7 +81,7 @@ public class LoadTestThread implements Runnable
 					long currentTime = System.currentTimeMillis();
 					while(currentTime - lastActionTime < waitTime)
 					{
-						if(!LoadTestPlayer.isRunning()) return;
+						if(!master.isRunning()) return;
 						Thread.sleep(10);
 						currentTime = System.currentTimeMillis();
 					}
@@ -90,7 +94,7 @@ public class LoadTestThread implements Runnable
 					Long duration =	runAction(action);
 					
 					if (null != duration)
-						globalPlayerStats.recordActionTime(action.getPath(), duration);
+						globalPlayerStats.recordActionTime(action.getIdentifier(), duration);
 				}
 				
 				//Record the time it took to execute the entire test plan
@@ -105,7 +109,7 @@ public class LoadTestThread implements Runnable
 			long endTime = System.currentTimeMillis();
 			double timeInMinutes = (endTime - threadStartTime)/60000.0;
 			
- 			log.info("Thread " + threadNumber + " completed " + runCount + " run" + (runCount > 1 ? "s" : "") + " of the test plan in " + timeInMinutes + " minutes, including pauses." + (runCount > 1 ? " Average test plan time " + timeInMinutes/runCount + " minutes, including pauses." : ""));
+ 			log.info("Thread " + threadNumber + " completed " + runCount + " run" + (runCount > 1 ? "s" : "") + " of the test plan in " + String.format("%.2f",timeInMinutes) + " minutes, including pauses." + (runCount > 1 ? " Average test plan time " + String.format("%.2f",timeInMinutes/runCount) + " minutes, including pauses." : ""));
 		}
 		catch(InterruptedException e)
 		{
@@ -117,7 +121,7 @@ public class LoadTestThread implements Runnable
 		}
 		finally
 		{
-			LoadTestPlayer.threadComplete(Thread.currentThread());
+			master.threadComplete(Thread.currentThread());
 		}
 	}
 	

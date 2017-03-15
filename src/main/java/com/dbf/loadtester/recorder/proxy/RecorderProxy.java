@@ -1,12 +1,13 @@
 package com.dbf.loadtester.recorder.proxy;
 
-import org.apache.log4j.Logger;
-
 import com.dbf.loadtester.recorder.proxy.server.RecorderProxyServer;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class RecorderProxy
 {
-	private static final Logger log = Logger.getLogger(RecorderProxy.class);
+	private static final Logger log = LoggerFactory.getLogger(RecorderProxy.class);
 	
 	public static void main(String[] args)
 	{
@@ -17,7 +18,7 @@ public class RecorderProxy
     	}
     	catch(IllegalArgumentException e)
     	{
-    		log.fatal("Invalid CMD line Arguments: " + e.getMessage());
+    		log.error("Invalid CMD line Arguments: " + e.getMessage());
     		RecorderProxyOptions.printOptions();
     		System.exit(1);
     	}

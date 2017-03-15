@@ -7,19 +7,20 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 
-import org.apache.log4j.Logger;
-
 import com.dbf.loadtester.common.json.JsonEncoder;
-import com.dbf.loadtester.player.LoadTestPlayer;
+import com.dbf.loadtester.player.LoadTestCoordinator;
 import com.dbf.loadtester.recorder.filter.RecorderServletFilter;
 import com.google.gson.JsonSyntaxException;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class RecorderManager implements RecorderManagerMBean
 {
 	//Allows multiple instances to each have a unique id
 	private static AtomicLong instanceCounter = new AtomicLong(1L);
 	
-	private static final Logger log = Logger.getLogger(LoadTestPlayer.class);
+	private static final Logger log = LoggerFactory.getLogger(LoadTestCoordinator.class);
 	
 	private final RecorderServletFilter recorderServletFilter;
 	private final Long instanceId;

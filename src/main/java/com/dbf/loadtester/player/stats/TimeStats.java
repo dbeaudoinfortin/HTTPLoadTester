@@ -74,7 +74,7 @@ public class TimeStats
 		else
 		{
 			sb.append(String.format("%.2f",min / 1000.0));
-			sb.append("(s) ");
+			sb.append("s ");
 		}
 
 		sb.append("max:");
@@ -85,12 +85,12 @@ public class TimeStats
 		else
 		{
 			sb.append(String.format("%.2f",max / 1000.0));
-			sb.append("(s) ");
+			sb.append("s ");
 		}
 
 		sb.append("total:");
 		sb.append(String.format("%.2f",total / 1000.0));
-		sb.append("(s) ");
+		sb.append("s ");
 
 		sb.append("count:");
 		sb.append(count);
@@ -98,11 +98,11 @@ public class TimeStats
 
 		sb.append("avg:");
 		sb.append(String.format("%.2f",average / 1000.0));
-		sb.append("(s)");
+		sb.append("s ");
 		
 		sb.append("rolling avg:");
 		sb.append(String.format("%.2f",rollingAverage / 1000.0));
-		sb.append("(s)");
+		sb.append("s");
 
 		return sb.toString();
 

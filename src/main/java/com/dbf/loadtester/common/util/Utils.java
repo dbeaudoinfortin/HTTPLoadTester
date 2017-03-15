@@ -6,6 +6,11 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.regex.Pattern;
 
+import org.slf4j.ILoggerFactory;
+import org.slf4j.LoggerFactory;
+
+import ch.qos.logback.classic.LoggerContext;
+
 public class Utils
 {	
 	private static Boolean isWindows;
@@ -42,5 +47,14 @@ public class Utils
 			in.close();
 		}
 		
+	}
+	public static void flushAllLogs()
+	{
+		ILoggerFactory loggerFactory = LoggerFactory.getILoggerFactory();
+		if (loggerFactory instanceof LoggerContext)
+		{
+		    LoggerContext context = (LoggerContext) loggerFactory;
+		    context.stop();
+		}
 	}
 }

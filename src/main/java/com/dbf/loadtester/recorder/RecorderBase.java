@@ -16,12 +16,13 @@ import java.util.regex.Pattern;
 import javax.servlet.ServletRequest;
 import javax.servlet.http.HttpServletRequest;
 
-import org.apache.log4j.Logger;
-
 import com.dbf.loadtester.common.action.HTTPAction;
 import com.dbf.loadtester.common.action.HTTPConverter;
 import com.dbf.loadtester.common.json.JsonEncoder;
 import com.dbf.loadtester.common.util.Utils;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Records incoming HTTP requests and saves them to disk
@@ -31,7 +32,7 @@ import com.dbf.loadtester.common.util.Utils;
  */
 public class RecorderBase
 {
-	private static final Logger log = Logger.getLogger(RecorderBase.class);
+	private static final Logger log = LoggerFactory.getLogger(RecorderBase.class);
 		
 	private static final String DEFAULT_DIRECTORY_PATH = Utils.isWindows() ? "C:\\temp\\httploadtester\\" : "/var/httploadtester/";
 	

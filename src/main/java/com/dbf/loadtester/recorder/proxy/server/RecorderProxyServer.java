@@ -2,7 +2,6 @@ package com.dbf.loadtester.recorder.proxy.server;
 
 import javax.servlet.DispatcherType;
 import javax.servlet.ServletException;
-import org.apache.log4j.Logger;
 import com.dbf.loadtester.common.util.SSLUtil;
 import com.dbf.loadtester.recorder.filter.RecorderServletFilter;
 import com.dbf.loadtester.recorder.filter.RecorderServletFilterFactory;
@@ -16,9 +15,12 @@ import io.undertow.servlet.api.DeploymentInfo;
 import io.undertow.servlet.api.DeploymentManager;
 import io.undertow.servlet.api.FilterInfo;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public class RecorderProxyServer
 {
-	private static final Logger log = Logger.getLogger(RecorderProxyServer.class);
+	private static final Logger log = LoggerFactory.getLogger(RecorderProxyServer.class);
 	
 	public static void initializeServer(RecorderProxyOptions options)
 	{

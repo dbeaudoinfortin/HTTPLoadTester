@@ -20,13 +20,14 @@ import io.undertow.servlet.api.DeploymentManager;
 
 public class PlayerManagementServer
 {
-	public static void initializeServer(PlayerManagerMBean manager, PlayerOptions config) throws Exception
+	public static Undertow initializeServer(PlayerManagerMBean manager, PlayerOptions config) throws Exception
 	{		
 		Undertow server = Undertow.builder()
                 .addHttpListener(config.getRestPort(), "localhost")
                 .setHandler(buildDeploymentManager(manager)).build();
 		
 		server.start();
+		return server;
 	}
 	
 	private static HttpHandler buildDeploymentManager(PlayerManagerMBean manager) throws ServletException

@@ -3,35 +3,38 @@ package com.dbf.loadtester.player.management;
 import java.io.File;
 import java.util.Map;
 
-import org.apache.log4j.Logger;
-
-import com.dbf.loadtester.player.LoadTestPlayer;
+import com.dbf.loadtester.player.LoadTestCoordinator;
 import com.dbf.loadtester.player.config.PlayerOptions;
 import com.dbf.loadtester.player.stats.TimeStats;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 //Class specifically named for JMX
 public class PlayerManager implements PlayerManagerMBean
 {
-	private static final Logger log = Logger.getLogger(LoadTestPlayer.class);
+	private static final Logger log = LoggerFactory.getLogger(LoadTestCoordinator.class);
 	
 	private final PlayerOptions config;
+	private final LoadTestCoordinator master;
 	
-	public PlayerManager(PlayerOptions config)
+	public PlayerManager(LoadTestCoordinator master, PlayerOptions config)
 	{
 		this.config = config;
+		this.master = master;
 	}
 	
 	@Override
 	public boolean isRunning()
 	{
-		return LoadTestPlayer.isRunning();
+		return master.isRunning();
 	}
 
 	@Override
 	public int getRunningThreadCount()
 	{
 		// TODO Auto-generated method stub
-		return LoadTestPlayer.getRunningThreadCount();
+		return master.getRunningThreadCount();
 	}
 
 	@Override
@@ -39,7 +42,7 @@ public class PlayerManager implements PlayerManagerMBean
 	{
 		try
 		{
-			LoadTestPlayer.start();	
+			master.start();	
 		}
 		catch(IllegalArgumentException e)
 		{
@@ -56,7 +59,7 @@ public class PlayerManager implements PlayerManagerMBean
 	@Override
 	public void stop()
 	{
-		LoadTestPlayer.stop();
+		master.stop();
 	}
 
 	@Override

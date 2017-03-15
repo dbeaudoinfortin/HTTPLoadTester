@@ -8,7 +8,8 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.dbf.loadtester.common.action.HTTPAction;
 import com.dbf.loadtester.common.json.JsonEncoder;
@@ -18,11 +19,10 @@ import com.dbf.loadtester.common.json.JsonEncoder;
  * Utility to merge multiple JSON files together using the absolute time of each action.
  * Especially useful if the two files come from different servers.
  * 
- *
  */
 public class MergeJson
 {
-	private static final Logger log = Logger.getLogger(MergeJson.class);
+	private static final Logger log = LoggerFactory.getLogger(MergeJson.class);
 	
 	private static final String JSON_OUTPUT_FILE = "C:\\Users\\dbeaudoinfortin\\Desktop\\Polycom\\Combined.json";
 	private static final List<String> jsonFiles;

@@ -8,11 +8,13 @@ import org.apache.http.client.HttpClient;
 import org.apache.http.conn.ssl.DefaultHostnameVerifier;
 import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
 import org.apache.http.impl.client.HttpClientBuilder;
-import org.apache.log4j.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class HTTPClientFactory
 {
-	private static final Logger log = Logger.getLogger(HTTPClientFactory.class);
+	private static final Logger log = LoggerFactory.getLogger(HTTPClientFactory.class);
 	
 	private static SSLConnectionSocketFactory sslFactory;
 	
@@ -26,7 +28,7 @@ public class HTTPClientFactory
 		}
         catch (Throwable t)
 		{
-        	log.fatal("Failed to initialize SSL Trust Manager.",t);
+        	log.error("Failed to initialize SSL Trust Manager.",t);
 		}
 	}
 	

@@ -3,7 +3,6 @@ package com.dbf.loadtester.recorder.management.server;
 import javax.servlet.ServletException;
 import javax.ws.rs.core.Application;
 
-import org.apache.log4j.Logger;
 import org.jboss.resteasy.plugins.server.servlet.HttpServlet30Dispatcher;
 import org.jboss.resteasy.spi.ResteasyDeployment;
 
@@ -18,9 +17,12 @@ import io.undertow.servlet.Servlets;
 import io.undertow.servlet.api.DeploymentInfo;
 import io.undertow.servlet.api.DeploymentManager;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public class RecorderManagementServer
 {
-	private static final Logger log = Logger.getLogger(RecorderManagementServer.class);
+	private static final Logger log = LoggerFactory.getLogger(RecorderManagementServer.class);
 	
 	public static void initializeServer(RecorderManagerMBean manager, int restPort)
 	{

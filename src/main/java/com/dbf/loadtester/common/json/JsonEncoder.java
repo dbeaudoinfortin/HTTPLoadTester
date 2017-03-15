@@ -12,7 +12,8 @@ import java.util.LinkedList;
 import java.util.List;
 
 import org.apache.commons.io.input.BOMInputStream;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.dbf.loadtester.common.action.HTTPAction;
 import com.google.gson.Gson;
@@ -23,7 +24,7 @@ import com.google.gson.stream.JsonWriter;
 
 public class JsonEncoder
 {
-	private static final Logger log = Logger.getLogger(JsonEncoder.class);
+	private static final Logger log = LoggerFactory.getLogger(JsonEncoder.class);
 	
 	private static final Gson gson = new GsonBuilder().setDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ").create();
 
