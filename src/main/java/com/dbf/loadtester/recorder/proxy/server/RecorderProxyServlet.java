@@ -97,7 +97,6 @@ public class RecorderProxyServlet implements Servlet
 			if(headerName.equalsIgnoreCase("Location"))
 				headerValue = modifyLocationHeader(headerValue, wrappedRequest.getServerName());
 			
-			
 			httpServletResponse.setHeader(headerName, headerValue);
 		}
 		
@@ -119,17 +118,7 @@ public class RecorderProxyServlet implements Servlet
 		{
 			//Use the URI object to handle parsing
 			URI uri = new URI(originalHeaderValue);
-			
 			String uriHost = uri.getHost().toLowerCase();
-			
-			//Make a special exception of hosts pre-fixed with www.
-			boolean hasWWW = false;
-			if(uriHost.startsWith("www."))
-			{
-				hasWWW = true;
-				uriHost = uriHost.substring(4);
-			}
-			
 			if(proxyHost.equals(uriHost))
 			{
 				//The ports must also match. Since the port may not be explicitly defined,
@@ -140,7 +129,7 @@ public class RecorderProxyServlet implements Servlet
 				if(uriPort == proxyPort)
 				{
 					URIBuilder newUriBuilder = new URIBuilder(uri);
-					newUriBuilder.setHost((hasWWW ? "www." : "") + originalRequestHostName);
+					newUriBuilder.setHost(originalRequestHostName);
 					newUriBuilder.setPort(isHTTPs ? listenerHTTPSPort : listenerHTTPPort);
 					return newUriBuilder.toString();
 				}

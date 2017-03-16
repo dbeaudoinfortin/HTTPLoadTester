@@ -45,7 +45,7 @@ public class RecorderManagementServer
 	private static void initializeManagementServer(RecorderManagerMBean manager, int restPort) throws ServletException
 	{
 		Undertow server = Undertow.builder()
-                .addHttpListener(restPort, "localhost")
+                .addHttpListener(restPort, "0.0.0.0")
                 .setHandler(buildManagementDeploymentManager(manager)).build();
 		
 		server.start();

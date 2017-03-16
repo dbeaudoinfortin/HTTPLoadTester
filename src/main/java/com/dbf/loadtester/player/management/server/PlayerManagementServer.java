@@ -23,7 +23,7 @@ public class PlayerManagementServer
 	public static Undertow initializeServer(PlayerManagerMBean manager, PlayerOptions config) throws Exception
 	{		
 		Undertow server = Undertow.builder()
-                .addHttpListener(config.getRestPort(), "localhost")
+                .addHttpListener(config.getRestPort(), "0.0.0.0")
                 .setHandler(buildDeploymentManager(manager)).build();
 		
 		server.start();

@@ -10,6 +10,7 @@ import com.dbf.loadtester.recorder.filter.RecorderServletFilterOptions;
 import com.dbf.loadtester.recorder.proxy.RecorderProxyOptions;
 
 import io.undertow.Undertow;
+import io.undertow.UndertowOptions;
 import io.undertow.server.HttpHandler;
 import io.undertow.servlet.Servlets;
 import io.undertow.servlet.api.DeploymentInfo;
@@ -43,8 +44,9 @@ public class RecorderProxyServer
 	private static void initializeProxyServer(RecorderProxyOptions options) throws Exception
 	{
 		Undertow server = Undertow.builder()
-	                .addHttpListener(options.getHttpPort(), "localhost")
-	                .addHttpsListener(options.getHttpsPort(), "localhost", IncomingSSLUtil.buildSSLContext())
+	                .addHttpListener(options.getHttpPort(), "0.0.0.0")
+	                .addHttpsListener(options.getHttpsPort(), "0.0.0.0", IncomingSSLUtil.buildSSLContext())
+	                .setServerOption(UndertowOptions.MAX_PARAMETERS, 10000)
 	                .setHandler(buildProxyHttpHandler(options)).build();
 		
 		

@@ -55,7 +55,7 @@ public class HTTPConverter
 	 */
 	public static HttpRequestBase convertHTTPActionToApacheRequest(HTTPAction action, String host, int httpPort, int httpsPort) throws URISyntaxException
 	{
-		return buildApacheRequest(action.getScheme(), host, httpPort, httpsPort, action.getQueryString(), action.getPath(), action.getMethod(), action.getHeaders(), action.getContent().getBytes(), action.getContentType(), false);
+		return buildApacheRequest(action.getScheme(), host, host, httpPort, httpsPort, action.getQueryString(), action.getPath(), action.getMethod(), action.getHeaders(), action.getContent().getBytes(), action.getContentType(), false);
 	}
 	
 	/**
@@ -65,7 +65,7 @@ public class HTTPConverter
 	 */
 	public static HttpRequestBase convertServletRequestToApacheRequest(RecorderHttpServletRequestWrapper httpRequest, String host, int httpPort, int httpsPort) throws URISyntaxException
 	{
-		return buildApacheRequest(httpRequest.getScheme(), host, httpPort, httpsPort, httpRequest.getQueryString(), httpRequest.getPathInfo(), httpRequest.getMethod(), extractHeaders(httpRequest),
+		return buildApacheRequest(httpRequest.getScheme(), host, httpRequest.getServerName(), httpPort, httpsPort, httpRequest.getQueryString(), httpRequest.getPathInfo(), httpRequest.getMethod(), extractHeaders(httpRequest),
 				httpRequest.getRequestBody(), httpRequest.getContentType(), true);
 	}
 	
@@ -100,7 +100,7 @@ public class HTTPConverter
 	 * 
 	 * Used by the Player for load testing and by the Recorder Proxy for forwarding requests.
 	 */
-	private static HttpRequestBase buildApacheRequest(String scheme, String host, int httpPort, int httpsPort, String queryString, String path, String method, Map<String,String> headers, byte[] content, String contentType, boolean retainCookies) throws URISyntaxException
+	private static HttpRequestBase buildApacheRequest(String scheme, String host, String hostHeader, int httpPort, int httpsPort, String queryString, String path, String method, Map<String,String> headers, byte[] content, String contentType, boolean retainCookies) throws URISyntaxException
 	{
 		URI uri = buildURI(scheme, host, httpPort, httpsPort, queryString, path);
 		String actionMethod = method.toUpperCase();
@@ -151,9 +151,11 @@ public class HTTPConverter
 				String headerNameLowerCase = headerName.toLowerCase();
 				
 				//Override the host since it won't match
+				//For the load tester, this should be the target host
+				//For the Recorder Proxy, this the hostname of he proxy machine
 				if(headerNameLowerCase.equals("host"))
 				{
-					httpMethod.addHeader(headerName, host);
+					httpMethod.addHeader(headerName, hostHeader);
 					continue;
 				}
 				
