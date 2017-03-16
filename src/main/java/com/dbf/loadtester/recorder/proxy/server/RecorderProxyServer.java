@@ -61,6 +61,8 @@ public class RecorderProxyServer
                         Servlets.servlet("Recorder Proxy Servlet", RecorderProxyServlet.class)
                         .addInitParam(RecorderProxyServlet.PARAM_PROXY_HTTP_PORT, "" + options.getForwardHTTPPort())
                         .addInitParam(RecorderProxyServlet.PARAM_PROXY_HTTPS_PORT, "" + options.getForwardHTTPSPort())
+                        .addInitParam(RecorderProxyServlet.PARAM_LISTENER_HTTP_PORT, "" + options.getHttpPort())
+                        .addInitParam(RecorderProxyServlet.PARAM_LISTENER_HTTPS_PORT, "" + options.getHttpsPort())
                         .addInitParam(RecorderProxyServlet.PARAM_PROXY_HOST, options.getForwardHost())
                         .addMapping("/*")
                 )

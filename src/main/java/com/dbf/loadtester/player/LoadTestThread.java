@@ -214,7 +214,7 @@ public class LoadTestThread implements Runnable
 			//Re-use HTTP Requests for better performance
 			try
 			{
-				actionCopy.setHttpRequest(HTTPConverter.convertHTTPActionToHTTPClientRequest(actionCopy, host, httpPort, httpsPort));
+				actionCopy.setHttpRequest(HTTPConverter.convertHTTPActionToApacheRequest(actionCopy, host, httpPort, httpsPort));
 			}
 			catch (URISyntaxException e)
 			{

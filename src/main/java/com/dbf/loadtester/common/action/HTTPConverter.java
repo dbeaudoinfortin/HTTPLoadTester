@@ -24,6 +24,11 @@ import com.dbf.loadtester.recorder.RecorderHttpServletRequestWrapper;
 
 public class HTTPConverter
 {
+	/**
+	 * Converts a Servlet request to an HTTP Action.
+	 * 
+	 * Used by the Recorder to save actions
+	 */
 	public static HTTPAction convertServletRequestToHTTPAction(RecorderHttpServletRequestWrapper httpRequest, Date currentDate, long timePassed) throws IOException
 	{
 		HTTPAction httpAction = new HTTPAction();
@@ -43,17 +48,34 @@ public class HTTPConverter
 		return httpAction;
 	}
 	
-	public static HttpRequestBase convertHTTPActionToHTTPClientRequest(HTTPAction action, String host, int httpPort, int httpsPort) throws URISyntaxException
+	/**
+	 * Converts an HTTP Action to an Apache HTTP Client Request.
+	 * 
+	 * Used by the Player for load testing.
+	 */
+	public static HttpRequestBase convertHTTPActionToApacheRequest(HTTPAction action, String host, int httpPort, int httpsPort) throws URISyntaxException
 	{
-		return buildHTTPClientRequest(action.getScheme(), host, httpPort, httpsPort, action.getQueryString(), action.getPath(), action.getMethod(), action.getHeaders(), action.getContent().getBytes(), action.getContentType());
+		return buildApacheRequest(action.getScheme(), host, httpPort, httpsPort, action.getQueryString(), action.getPath(), action.getMethod(), action.getHeaders(), action.getContent().getBytes(), action.getContentType(), false);
 	}
 	
-	public static HttpRequestBase convertServletRequestToHTTPClientRequest(RecorderHttpServletRequestWrapper httpRequest, String host, int httpPort, int httpsPort) throws URISyntaxException
+	/**
+	 * Converts a Servlet request to an Apache HTTP Client Request.
+	 * 
+	 * Used by the Recorder Proxy to forward requests
+	 */
+	public static HttpRequestBase convertServletRequestToApacheRequest(RecorderHttpServletRequestWrapper httpRequest, String host, int httpPort, int httpsPort) throws URISyntaxException
 	{
-		return buildHTTPClientRequest(httpRequest.getScheme(), host, httpPort, httpsPort, httpRequest.getQueryString(), httpRequest.getPathInfo(), httpRequest.getMethod(), extractHeaders(httpRequest),
-				httpRequest.getRequestBody(), httpRequest.getContentType());
+		return buildApacheRequest(httpRequest.getScheme(), host, httpPort, httpsPort, httpRequest.getQueryString(), httpRequest.getPathInfo(), httpRequest.getMethod(), extractHeaders(httpRequest),
+				httpRequest.getRequestBody(), httpRequest.getContentType(), true);
 	}
 	
+	/**
+	 * 
+	 * Extracts header from a Servlet Request
+	 * 
+	 * Used by the Recorder for both saving actions and forwarding requests
+	 * 
+	 */
 	private static Map<String, String> extractHeaders(RecorderHttpServletRequestWrapper httpRequest)
 	{
 		Map<String, String> headers = new HashMap<String, String>(); 
@@ -73,7 +95,12 @@ public class HTTPConverter
 		return headers;
 	}
 	
-	private static HttpRequestBase buildHTTPClientRequest(String scheme, String host, int httpPort, int httpsPort, String queryString, String path, String method, Map<String,String> headers, byte[] content, String contentType) throws URISyntaxException
+	/**
+	 * Build an Apache HTTP Client Request.
+	 * 
+	 * Used by the Player for load testing and by the Recorder Proxy for forwarding requests.
+	 */
+	private static HttpRequestBase buildApacheRequest(String scheme, String host, int httpPort, int httpsPort, String queryString, String path, String method, Map<String,String> headers, byte[] content, String contentType, boolean retainCookies) throws URISyntaxException
 	{
 		URI uri = buildURI(scheme, host, httpPort, httpsPort, queryString, path);
 		String actionMethod = method.toUpperCase();
@@ -104,11 +131,11 @@ public class HTTPConverter
 				return null;	
 		}
 		
+		//Apply the content
 		if(hasContent)
 		{
 			HttpEntity requestEntity = new ByteArrayEntity(content, (contentType == null || contentType.equals("")) ? null : ContentType.parse(contentType));
 			((HttpEntityEnclosingRequestBase) httpMethod).setEntity(requestEntity);
-			
 		}
 		
 		//Process special headers
@@ -120,16 +147,28 @@ public class HTTPConverter
 				if(headerName.equals(""))
 					continue;
 				
-				String headerValue = entry.getValue();
-				if(headerName.equals("host"))
+				//It good practice to treat headers as case-insensitive
+				String headerNameLowerCase = headerName.toLowerCase();
+				
+				//Override the host since it won't match
+				if(headerNameLowerCase.equals("host"))
 				{
 					httpMethod.addHeader(headerName, host);
 					continue;
 				}
 				
-				//already set by the setEntity() method above.
+				//Already set by the setEntity() method above.
 				if(headerName.equals("Content-Length") || headerName.equals("Content-Type"))
 					continue;
+				
+				//When using the recorder proxy and forwarding requests, we want to retain the cookies and forward them too. 
+				//The browser is managing the cookies and we are just a middle man. However, when using the load tester, 
+				//the load tester simulating a browser and must manage the cookies itself. We don't want to use the cookies
+				//saved at the time of recording the actions since these are out of date.
+				if(headerName.equals("Cookie") && !retainCookies)
+					continue;
+				
+				String headerValue = entry.getValue();
 				
 				//For performance reasons, don't force close the connection
 				if(headerName.equals("Connection") && headerValue.equals("close"))

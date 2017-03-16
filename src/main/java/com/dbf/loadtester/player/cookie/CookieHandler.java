@@ -76,6 +76,8 @@ public class CookieHandler
 	public static void applyCookies(CookieStore cookieStore, CookieOrigin cookieOrigin, HttpRequestBase request)
 	{
 		//Since we recycle the request objects, we need to clear the headers from the previous execution
+		//At this point, there shouldn't be any cookies copied over from the HTTPAction. Those should have
+		//been stripped by the convertHTTPActionToApacheRequest() method.
 		request.removeHeaders(SM.COOKIE);
 		
 		final Date now = new Date();
