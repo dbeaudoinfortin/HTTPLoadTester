@@ -3,13 +3,10 @@ package com.dbf.loadtester.common.action;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.Collection;
 import java.util.Date;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Map;
-
-import javax.servlet.http.Part;
 
 import org.apache.http.HttpEntity;
 import org.apache.http.client.methods.HttpDelete;
@@ -22,8 +19,6 @@ import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.entity.ContentType;
-import org.apache.http.entity.mime.MultipartEntityBuilder;
-
 import com.dbf.loadtester.recorder.RecorderHttpServletRequestWrapper;
 
 public class HTTPConverter
@@ -69,7 +64,6 @@ public class HTTPConverter
 	 */
 	public static HttpRequestBase convertServletRequestToApacheRequest(RecorderHttpServletRequestWrapper httpRequest, String host, int httpPort, int httpsPort, boolean overrideHostHeader) throws URISyntaxException
 	{
-
 		return buildApacheRequest(httpRequest.getScheme(), host, httpPort, httpsPort, httpRequest.getQueryString(), httpRequest.getPathInfo(), httpRequest.getMethod(), extractHeaders(httpRequest),
 				httpRequest.getRequestBody(), httpRequest.getContentType(), true, overrideHostHeader);
 	}
@@ -139,9 +133,8 @@ public class HTTPConverter
 		//Apply the content
 		if(hasContent)
 		{
+			//TODO: Multipart support
 			//MultipartEntityBuilder builder;
-			
-	
 			HttpEntity requestEntity = new ByteArrayEntity(content, (contentType == null || contentType.equals("")) ? null : ContentType.parse(contentType));
 			((HttpEntityEnclosingRequestBase) httpMethod).setEntity(requestEntity);
 		
@@ -217,12 +210,15 @@ public class HTTPConverter
 		return uriBuilder.build();
 	}
 	
+	//TODO: Multipart support
+	/* 
 	private static void convertServletParts(Collection<Part> parts)
 	{
 		for(Part part : parts)
 		{
-			//finish me
+			System.out.println(part);
 		}
 	}
+	*/
 	
 }

@@ -58,11 +58,15 @@ public class RecorderBase
 	{
 		try
 		{
+			//It's crucial that the wrapper conversion be the very first step, before anything else consumes the input stream.
+			//Otherwise, the act of reading the request parameters could actually consume the input stream in the case
+			//of a form data request.
+			RecorderHttpServletRequestWrapper httpRequestWrapper = new RecorderHttpServletRequestWrapper(httpRequest);
+			
 			//Don't capture control requests
 			if(handleParams(httpRequest) || !running) return httpRequest;
 			
 			Date currentDate = new Date();
-			RecorderHttpServletRequestWrapper httpRequestWrapper = new RecorderHttpServletRequestWrapper(httpRequest);
 		
 			long timePassed = (previousTime < 0 ? 0 : currentDate.getTime() - previousTime);
 			previousTime = currentDate.getTime() ;
@@ -101,7 +105,11 @@ public class RecorderBase
 	
 	/**
 	 * Handles various control params. Returns true if any param was found.
-	 * This is an alternate way to start and stop recording when you don't have JMX access
+	 * Only supported as a query param, not a form param.
+	 * 
+	 * No longer recommended.
+	 * 
+	 * This is an alternate way to start and stop recording when you don't have JMX or REST access.
 	 * 
 	 * @throws IOException 
 	 */
