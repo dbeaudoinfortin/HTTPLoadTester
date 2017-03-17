@@ -11,8 +11,8 @@ public class HTTPClientFactory
 	{
 		return HttpClientBuilder
 				.create()
-				.disableRedirectHandling()
-				.disableCookieManagement()
+				.disableRedirectHandling() //Redirects will be manually managed
+				.disableCookieManagement() //Cookies will be manually managed
 				.setMaxConnPerRoute(maxConnections)
 				.setMaxConnTotal(maxConnections)
 				.setSSLSocketFactory(OutgoingSSLUtil.getSSLFactory())

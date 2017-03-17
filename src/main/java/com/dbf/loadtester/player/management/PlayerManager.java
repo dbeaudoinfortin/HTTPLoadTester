@@ -1,6 +1,9 @@
 package com.dbf.loadtester.player.management;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 
 import com.dbf.loadtester.player.LoadTestCoordinator;
@@ -202,6 +205,32 @@ public class PlayerManager implements PlayerManagerMBean
 	public TimeStats getAggregateActionStats()
 	{
 		return config.getGlobalPlayerStats().getAggregateActionStats();
+	}	
+	
+	/*
+	@Override
+	public boolean isDisableRedirects()
+	{
+		return config.isDisableRedirects();
+	}
+	
+	@Override
+	public void setDisableRedirects(boolean disableRedirects)
+	{
+		config.setDisableRedirects(disableRedirects);
+	}
+	*/
+	
+	@Override
+	public List<String> getCookieWhiteList()
+	{
+		return new ArrayList<String>(config.getCookieWhiteList());
+	}
+
+	@Override
+	public void setCookieWhiteList(List<String> cookieWhiteList)
+	{
+		config.setCookieWhiteList(new HashSet<String>(cookieWhiteList));
 	}
 	
 	@Override

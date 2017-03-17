@@ -4,14 +4,10 @@ import java.io.Serializable;
 import java.util.Date;
 import java.util.Map;
 
-import org.apache.http.client.methods.HttpRequestBase;
-import org.apache.http.cookie.CookieOrigin;
-
 public class HTTPAction implements Serializable
 {
 	private static final long serialVersionUID = 1L;
 	
-	private transient int id = -1;
 	private Date absoluteTime;
 	private long timePassed;
 	private String path;
@@ -23,15 +19,10 @@ public class HTTPAction implements Serializable
 	private String scheme;
 	private String queryString;
 	private Map<String, String> headers;
-	private transient String identifier;
-	private transient HttpRequestBase httpRequest;
-	private transient CookieOrigin cookieOrigin;
-	
 	public HTTPAction(){}
 	
 	public HTTPAction(HTTPAction other)
 	{
-		this.id = other.id;
 		this.absoluteTime = other.absoluteTime;
 		this.timePassed = other.timePassed;
 		this.path = other.path;
@@ -43,7 +34,6 @@ public class HTTPAction implements Serializable
 		this.scheme = other.scheme;
 		this.queryString = other.queryString;
 		this.headers = other.headers;
-		this.identifier = other.getIdentifier(); //Must call getter
 	}
 	
 	public long getTimePassed()
@@ -150,40 +140,12 @@ public class HTTPAction implements Serializable
 		this.scheme = scheme;
 	}
 
-	public int getId()
-	{
-		return id;
-	}
-
-	public void setId(int id)
-	{
-		this.id = id;
-	}
-
-	public HttpRequestBase getHttpRequest()
-	{
-		return httpRequest;
-	}
-
-	public void setHttpRequest(HttpRequestBase httpRequest)
-	{
-		this.httpRequest = httpRequest;
-	}
-	
 	public String getIdentifier()
 	{
-		//The action identifier should simply be the description prior to applying any thread substitutions
-		//For this to work, it needs to be manually set prior to applying substitutions
-		if (null == identifier) identifier = getDescription();
-		return identifier;
+		return getDescription();
 	}
-
-	public void setIdentifier(String identifier)
-	{
-		this.identifier = identifier;
-	}
-
-	private String getDescription()
+	
+	public String getDescription()
 	{
 		StringBuilder sb = new StringBuilder();
 		sb.append(getMethod());
@@ -200,26 +162,10 @@ public class HTTPAction implements Serializable
 		return sb.toString();
 	}
 
-	public CookieOrigin getCookieOrigin()
-	{
-		return cookieOrigin;
-	}
-
-	public void setCookieOrigin(CookieOrigin cookieOrigin)
-	{
-		this.cookieOrigin = cookieOrigin;
-	}
-
 	@Override
 	public String toString()
 	{
 		StringBuilder sb = new StringBuilder();
-		
-		if(id > -1)
-		{
-			sb.append(id);
-			sb.append(":");
-		}
 		sb.append("[");
 		sb.append(getDescription());
 		sb.append("]");

@@ -2,6 +2,7 @@ package com.dbf.loadtester.player;
 
 import java.net.URISyntaxException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -14,8 +15,9 @@ import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.impl.client.BasicCookieStore;
 import com.dbf.loadtester.common.action.HTTPAction;
-import com.dbf.loadtester.common.action.HTTPConverter;
+import com.dbf.loadtester.common.action.converter.ApacheRequestConverter;
 import com.dbf.loadtester.common.util.Utils;
+import com.dbf.loadtester.player.action.PlayerHTTPAction;
 import com.dbf.loadtester.player.config.PlayerOptions;
 import com.dbf.loadtester.player.cookie.CookieHandler;
 import com.dbf.loadtester.player.stats.PlayerStats;
@@ -42,13 +44,13 @@ public class LoadTestThread implements Runnable
 	private final int httpPort;
 	private final int httpsPort;
 	private final boolean overrideHttps;
-	private final List<HTTPAction> actions;
+	private final List<PlayerHTTPAction> actions;
 	private final PlayerStats globalPlayerStats;
 	private final LoadTestCoordinator master;
-	
-	
-	
-	public LoadTestThread(LoadTestCoordinator master, PlayerOptions config, int threadNumber, HttpClient httpClient)
+	private final ApacheRequestConverter requestConverter;
+	private final Collection<String> cookieWhiteList;
+
+	public LoadTestThread(LoadTestCoordinator master, PlayerOptions config, int threadNumber, HttpClient httpClient, ApacheRequestConverter requestConverter)
 	{
 		this.threadNumber = threadNumber;
 		this.httpClient = httpClient;
@@ -59,9 +61,13 @@ public class LoadTestThread implements Runnable
 		this.httpPort = config.getHttpPort();
 		this.httpsPort = config.getHttpsPort();
 		this.overrideHttps = config.isOverrideHttps();
-		this.actions = initializeHTTPActions(config.getActions(), threadNumber);
 		this.globalPlayerStats = config.getGlobalPlayerStats();
 		this.master = master;
+		this.requestConverter = requestConverter;
+		this.cookieWhiteList = config.getCookieWhiteList();
+		
+		//Initialize Actions last!
+		this.actions = initializeHTTPActions(config.getActions(), threadNumber);
 	}
 	
 	@Override
@@ -111,7 +117,7 @@ public class LoadTestThread implements Runnable
 	{
 		long lastActionTime = System.currentTimeMillis();
 		
-		for(HTTPAction action : actions)
+		for(PlayerHTTPAction action : actions)
 		{
 			//Handle termination of the test plan via JMX/REST
 			if(!master.isRunning()) return;
@@ -140,7 +146,7 @@ public class LoadTestThread implements Runnable
 		}
 	}
 	
-	private Long runAction(HTTPAction action) throws Exception
+	private Long runAction(PlayerHTTPAction action) throws Exception
 	{
 		if(null == action.getHttpRequest())
 		{
@@ -155,12 +161,13 @@ public class LoadTestThread implements Runnable
 		try
 		{
 			//Apply any relevant non-expired cookies
-			CookieHandler.applyCookies(cookieStore, action.getCookieOrigin(), request);
+			CookieHandler.applyCookies(cookieStore, action.getWhiteListCookies(), action.getCookieOrigin(), request);
 			
     		startTime = System.currentTimeMillis();
     		response = httpClient.execute(request);
     		
-    		//Consume the response body fully so that  the connection can be reused
+    		//Consume the response body fully so that the connection can be reused.
+    		//Reading the body is part of the overall action execution time.
     		HttpEntity entity = response.getEntity();
     		if(null != entity) Utils.discardStream(entity.getContent());
 
@@ -168,6 +175,7 @@ public class LoadTestThread implements Runnable
     		
     		//Store any cookies for subsequent calls
     		CookieHandler.storeCookie(cookieStore, action.getCookieOrigin(), response);
+    		
 		}
 		catch(Exception e)
 		{
@@ -193,39 +201,53 @@ public class LoadTestThread implements Runnable
 		substitutions.put(THREAD_ID_PARAM_PATTERN, "" + threadNumber);
 	}
 	
-	private List<HTTPAction> initializeHTTPActions(List<HTTPAction> actions, int threadNumber)
+	/**
+	 * Every thread will have different values for request path, query and body.
+	 * So, we have to initialize the Actions in a thread-specific way.
+	 */
+	private List<PlayerHTTPAction> initializeHTTPActions(List<HTTPAction> actions, int threadNumber)
 	{
 		//Apply substitutions during initialization for better performance
 		if(useSubstitutions) initSubstitutions();
 					
 		//Must do a deep copy because every thread will have different values for request path, query and body
-		List<HTTPAction> returnList = new ArrayList<HTTPAction>(actions.size());
+		List<PlayerHTTPAction> playerHTTPActions = new ArrayList<PlayerHTTPAction>(actions.size());
+		int id = 1;
 		for(HTTPAction source : actions)
 		{
-			HTTPAction actionCopy = new HTTPAction(source);
-			returnList.add(actionCopy);
-		
+			PlayerHTTPAction playerAction = new PlayerHTTPAction(source);
+			playerHTTPActions.add(playerAction);
+			playerAction.setId(id);
+			
 			//Apply substitutions before converting to HTTPMethod
-			if(useSubstitutions) applySubstitutions(actionCopy);
+			if(useSubstitutions) applySubstitutions(playerAction);
 			
 			//Handle HTTPs override
-			if(overrideHttps) actionCopy.setScheme("http");
+			if(overrideHttps) playerAction.setScheme("http");
 			
-			//Re-use HTTP Requests for better performance
+			//Pre-compute the cookie origin for each request. This will be different for every action depending on the Path.
+			boolean isSecure = playerAction.getScheme().equalsIgnoreCase("https");
+			playerAction.setCookieOrigin(CookieHandler.determineCookieOrigin(host, (isSecure ? httpsPort : httpPort), playerAction.getPath(), isSecure));
+			
+			//We re-use Apache HTTP Client Requests for better performance, so pre-generate it.
 			try
 			{
-				actionCopy.setHttpRequest(HTTPConverter.convertHTTPActionToApacheRequest(actionCopy, host, httpPort, httpsPort));
+				playerAction.setHttpRequest(requestConverter.convertHTTPActionToApacheRequest(playerAction));
 			}
 			catch (URISyntaxException e)
 			{
 				throw new RuntimeException("Failed to convert HTTP Action " + source, e);
 			}
 			
-			//Pre-compute the cookie origin for each request
-			boolean isSecure = actionCopy.getScheme().equalsIgnoreCase("https");
-			actionCopy.setCookieOrigin(CookieHandler.determineCookieOrigin(host, httpPort, actionCopy.getPath(), isSecure));
+			//Generally, we don't want to use the cookies saved in the test plan, at the time of recording
+			//since these are out of date. However, there are exceptions. 
+			//For example, the cookie may contain authentication or authorization.
+			//So, we provide a cookie white list that we want to retain.
+			playerAction.setWhiteListCookies(CookieHandler.applyWhiteListCookies(playerAction.getHeaders(), cookieWhiteList));
+			
+			id++;
 		}
-		return returnList;
+		return playerHTTPActions;
 	}
 	
 	private void applySubstitutions(HTTPAction action)

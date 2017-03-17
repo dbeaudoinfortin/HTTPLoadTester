@@ -1,5 +1,6 @@
 package com.dbf.loadtester.player.management.jaxrs;
 
+import java.util.List;
 import java.util.Map;
 
 import javax.ws.rs.Consumes;
@@ -214,5 +215,41 @@ public class PlayerManagementEndpoint
 	public TimeStats aggregateActionStats()
 	{
 		return manager.getAggregateActionStats();
+	}
+	
+	/*
+	@GET
+	@Path("/disableRedirects")
+	@Produces({ MediaType.APPLICATION_JSON })
+	public Boolean disableRedirects()
+	{
+		return manager.isDisableRedirects();
+	}
+	
+	@POST
+	@Path("/disableRedirects")
+	@Consumes({ MediaType.APPLICATION_JSON })
+	public Response disableRedirects(Boolean disableRedirects)
+	{
+		manager.setDisableRedirects(disableRedirects);
+		return Response.ok().build();
+	}
+	*/
+	
+	@POST
+	@Path("/cookieWhiteList")
+	@Consumes({ MediaType.APPLICATION_JSON })
+	public Response cookieWhiteList(List<String> cookieWhiteList)
+	{
+		manager.setCookieWhiteList(cookieWhiteList);
+		return Response.ok().build();
+	}
+	
+	@GET
+	@Path("/cookieWhiteList")
+	@Produces({ MediaType.APPLICATION_JSON })
+	public List<String> cookieWhiteList()
+	{
+		return manager.getCookieWhiteList();
 	}
 }

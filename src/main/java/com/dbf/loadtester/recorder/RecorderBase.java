@@ -17,7 +17,7 @@ import javax.servlet.ServletRequest;
 import javax.servlet.http.HttpServletRequest;
 
 import com.dbf.loadtester.common.action.HTTPAction;
-import com.dbf.loadtester.common.action.HTTPConverter;
+import com.dbf.loadtester.common.action.converter.HTTPActionConverter;
 import com.dbf.loadtester.common.json.JsonEncoder;
 import com.dbf.loadtester.common.util.Utils;
 
@@ -44,7 +44,8 @@ public class RecorderBase
 	private boolean running = false;
 	
 	private final String testPlanPrefix = getTestPlanFileNamePrefix();
-	
+	private final HTTPActionConverter actionConverter = new HTTPActionConverter();
+			
 	private Path testPlanDirectory = Paths.get(DEFAULT_DIRECTORY_PATH);
 	private int  testPlanCount = 0;
 	private Path testPlanPath = null;
@@ -71,7 +72,7 @@ public class RecorderBase
 			long timePassed = (previousTime < 0 ? 0 : currentDate.getTime() - previousTime);
 			previousTime = currentDate.getTime() ;
 			
-			HTTPAction httpAction = HTTPConverter.convertServletRequestToHTTPAction(httpRequestWrapper, currentDate, timePassed);
+			HTTPAction httpAction = actionConverter.convertServletRequestToHTTPAction(httpRequestWrapper, currentDate, timePassed);
 			applySubstitutions(httpAction);
 	      	saveHTTPAction(httpAction);
 	      	

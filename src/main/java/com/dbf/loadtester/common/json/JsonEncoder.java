@@ -38,11 +38,9 @@ public class JsonEncoder
 			reader = new BufferedReader(new InputStreamReader(new BOMInputStream(new FileInputStream(testPlan))));
 			String line;
 	
-			int i = 1;
 			while ((line = reader.readLine()) != null)
 			{
 				HTTPAction action = gson.fromJson(line, HTTPAction.class);
-				action.setId(i++);
 				actions.add(action);
 			}
 		}

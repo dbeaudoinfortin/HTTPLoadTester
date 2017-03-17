@@ -1,5 +1,6 @@
 package com.dbf.loadtester.player.management;
 
+import java.util.List;
 import java.util.Map;
 import com.dbf.loadtester.player.stats.TimeStats;
 
@@ -59,4 +60,14 @@ public interface PlayerManagerMBean
 	public TimeStats getTestPlanStats();
 	
 	public TimeStats getAggregateActionStats();
+	
+	/*
+	public boolean isDisableRedirects();
+	
+	public void setDisableRedirects(boolean disableRedirects);
+	*/
+	
+	public List<String> getCookieWhiteList();
+
+	public void setCookieWhiteList(List<String> cookieWhiteList);
 }

@@ -20,7 +20,7 @@ import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.client.utils.URIBuilder;
 
-import com.dbf.loadtester.common.action.HTTPConverter;
+import com.dbf.loadtester.common.action.converter.ApacheRequestConverter;
 import com.dbf.loadtester.common.httpclient.HTTPClientFactory;
 import com.dbf.loadtester.recorder.RecorderHttpServletRequestWrapper;
 import com.dbf.loadtester.recorder.proxy.RecorderProxyOptions;
@@ -37,6 +37,7 @@ public class RecorderProxyServlet implements Servlet
 	
 	private RecorderProxyOptions options;
 	private ServletConfig servletConfig;
+	private ApacheRequestConverter requestConverter;
 	
 	private HttpClient httpClient = HTTPClientFactory.getHttpClient(MAX_CONNECTIONS);
 	
@@ -45,6 +46,7 @@ public class RecorderProxyServlet implements Servlet
 	{
 		options = (RecorderProxyOptions) servletConfig.getServletContext().getAttribute(CONTEXT_OPTIONS_ATTRIBUTE);
 		this.servletConfig = servletConfig;
+		this.requestConverter = new ApacheRequestConverter(options.getForwardHost(), options.getForwardHTTPPort(), options.getForwardHTTPSPort(), options.isOverrideHostHeader());
 	}
 
 	@Override
@@ -60,7 +62,7 @@ public class RecorderProxyServlet implements Servlet
 		HttpRequestBase httpMethod = null;
 		try
 		{
-			httpMethod = HTTPConverter.convertServletRequestToApacheRequest(wrappedRequest, options.getForwardHost(), options.getForwardHTTPPort(), options.getForwardHTTPSPort(), options.isOverrideHostHeader());
+			httpMethod = requestConverter.convertServletRequestToApacheRequest(wrappedRequest);
 			HttpResponse response = httpClient.execute(httpMethod);
 			convertResponse(response, (HttpServletResponse) servletResponse, wrappedRequest);
 		}
@@ -75,20 +77,27 @@ public class RecorderProxyServlet implements Servlet
 		}
 	}
 	
-	private void convertResponse(HttpResponse response, HttpServletResponse httpServletResponse, RecorderHttpServletRequestWrapper wrappedRequest) throws UnsupportedOperationException, IOException
+	private void convertResponse(HttpResponse incomingApacheResponse, HttpServletResponse outgoingServletResponse, RecorderHttpServletRequestWrapper incomingServletRequest) throws UnsupportedOperationException, IOException
 	{
-		for(Header header : response.getAllHeaders())
+		//Process status code
+		int responseStatusCode = incomingApacheResponse.getStatusLine().getStatusCode();
+		outgoingServletResponse.setStatus(responseStatusCode);
+		
+		if(responseStatusCode >= 300) 
+			log.warn("Received code " + responseStatusCode + " for action " + incomingServletRequest.getMethod() + " " + incomingServletRequest.getPathInfo());
+		
+		//Process headers
+		for(Header header : incomingApacheResponse.getAllHeaders())
 		{
 			String headerName = header.getName();
 			String headerValue = header.getValue();
 			
+			//Special case for Handling redirection header
 			if(headerName.equalsIgnoreCase("Location"))
-				headerValue = modifyLocationHeader(headerValue, wrappedRequest.getServerName());
+				headerValue = modifyLocationHeader(headerValue, incomingServletRequest.getServerName());
 			
-			httpServletResponse.setHeader(headerName, headerValue);
+			outgoingServletResponse.setHeader(headerName, headerValue);
 		}
-		
-		httpServletResponse.setStatus(response.getStatusLine().getStatusCode());
 		
 		//In order to correctly support links, we must do some special voodoo.
 		//We have to ensure that all the links intended for the original host are actually link back to us. 
@@ -102,11 +111,11 @@ public class RecorderProxyServlet implements Servlet
 			
 		//}
 		
-		HttpEntity entity = response.getEntity();
+		HttpEntity entity = incomingApacheResponse.getEntity();
 		if(entity != null)
 		{
-			httpServletResponse.setContentLengthLong(entity.getContentLength());
-			IOUtils.copy(entity.getContent(), httpServletResponse.getOutputStream());
+			outgoingServletResponse.setContentLengthLong(entity.getContentLength());
+			IOUtils.copy(entity.getContent(), outgoingServletResponse.getOutputStream());
 		}
 	}
 	

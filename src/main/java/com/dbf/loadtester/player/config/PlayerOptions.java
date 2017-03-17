@@ -2,6 +2,8 @@ package com.dbf.loadtester.player.config;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 
 import org.apache.commons.cli.CommandLine;
@@ -33,6 +35,7 @@ public class PlayerOptions
 		options.addOption("host", true, "The target host.");
 		options.addOption("httpPort", true, "Port to use for HTTP requests.");
 		options.addOption("httpsPort", true, "Port to use for HTTPs requests.");
+		options.addOption("cookieWhiteList", true, "List of comma-seperated Cookie names that will used from the test plan. All other cookies will be discarded.");
 		options.addOption("pause", false, "Pause and wait for JMX/REST invocation to start.");
 		options.addOption("keepAlive", false, "Keep Load Test Player alive after all threads have halted.");
 		options.addOption("overrideHttps", false, "Override all HTTPs actions with HTTP");
@@ -40,6 +43,7 @@ public class PlayerOptions
 		options.addOption("restPort", true, "Port to use for REST API managment interface.");
 		options.addOption("disableREST", false, "Disable the REST API managment interface.");
 		options.addOption("disableJMX", false, "Disable the JMX managment interface.");
+		//options.addOption("disableRedirects", false, "Disables the following 3xx redirects.");
 	}
 	
 	private String host = Constants.DEFAULT_HOST;
@@ -57,8 +61,10 @@ public class PlayerOptions
 	private boolean keepAlive = false;
 	private boolean disableREST = false;
 	private boolean disableJMX = false;
+	//private boolean disableRedirects = false;
 	private List<HTTPAction> actions;
 	private PlayerStats globalPlayerStats = new PlayerStats();
+	private Collection<String> cookieWhiteList = new HashSet<String>();
 
 	public PlayerOptions(){}
 
@@ -108,6 +114,14 @@ public class PlayerOptions
 			useSubstitutions = true;
 			log.info("Substitutions will be applied to the Test Plan.");
 		}
+		
+		/*
+		if(cmd.hasOption("disableRedirects"))
+		{
+			disableRedirects = true;
+			log.info("Disable Redirects flag set, 3xx redirection responses will be ignored.");
+		}
+		*/
 		
 		if(cmd.hasOption("disableREST"))
 		{
@@ -196,6 +210,18 @@ public class PlayerOptions
 		else
 		{
 			log.info("Using default management REST API port: " + Constants.DEFAULT_PLAYER_REST_PORT);
+		}
+		
+		
+		if(cmd.hasOption("cookieWhiteList"))
+		{
+			String rawList = cmd.getOptionValue("cookieWhiteList");
+			for (String cookieName : rawList.split(",")) cookieWhiteList.add(cookieName);
+			log.info("Using the following Cookie White List: " + cookieWhiteList +". These cookies will be used from the test plan.");
+		}
+		else
+		{
+			log.info("Cookie White List disabled. All cookies from the test plan will be ignored.");
 		}
 	}
 	
@@ -382,5 +408,27 @@ public class PlayerOptions
 	public boolean isDisableJMX()
 	{
 		return disableJMX;
+	}
+
+	/*
+	public boolean isDisableRedirects()
+	{
+		return disableRedirects;
+	}
+
+	public void setDisableRedirects(boolean disableRedirects)
+	{
+		this.disableRedirects = disableRedirects;
+	}
+	 */
+	
+	public Collection<String> getCookieWhiteList()
+	{
+		return cookieWhiteList;
+	}
+
+	public void setCookieWhiteList(Collection<String> cookieWhiteList)
+	{
+		this.cookieWhiteList = cookieWhiteList;
 	}
 }

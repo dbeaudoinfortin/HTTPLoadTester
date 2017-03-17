@@ -1,8 +1,10 @@
 package com.dbf.loadtester.player.cookie;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.http.Header;
 import org.apache.http.HttpResponse;
@@ -13,6 +15,7 @@ import org.apache.http.cookie.CookieOrigin;
 import org.apache.http.cookie.CookieSpec;
 import org.apache.http.cookie.MalformedCookieException;
 import org.apache.http.cookie.SM;
+import org.apache.http.impl.cookie.BasicClientCookie;
 import org.apache.http.impl.cookie.DefaultCookieSpec;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,7 +40,7 @@ public class CookieHandler
 		return new CookieOrigin(hostName, port, path, secure);
 	}
 	
-	/*
+	/**
 	 * Adapted from org.apache.http.client.protocol.ResponseProcessCookies
 	 */
 	public static void storeCookie(CookieStore cookieStore, CookieOrigin cookieOrigin,  HttpResponse response)
@@ -70,14 +73,47 @@ public class CookieHandler
 		
 	}
 	
-	/*
-	 * Adapted from org.apache.http.client.protocol.RequestAddCookies
-	 */
-	public static void applyCookies(CookieStore cookieStore, CookieOrigin cookieOrigin, HttpRequestBase request)
+	public static List<Cookie> applyWhiteListCookies(Map<String,String> headers, Collection<String> cookieWhiteList)
 	{
-		//Since we recycle the request objects, we need to clear the headers from the previous execution
-		//At this point, there shouldn't be any cookies copied over from the HTTPAction. Those should have
-		//been stripped by the convertHTTPActionToApacheRequest() method.
+		List<Cookie> retainedCookies = new ArrayList<Cookie>();
+		
+		if(headers == null || headers.size() == 0) return retainedCookies;
+		if (cookieWhiteList == null || cookieWhiteList.size() == 0) return retainedCookies;
+		
+		for (Map.Entry<String, String> entry : headers.entrySet())
+		{
+			String headerValue = entry.getValue();
+			String headerNameLowerCase = entry.getKey().toLowerCase();
+			if(!headerNameLowerCase.equals("cookie")) continue;
+						
+			//Parse the cookie header to determine the cookie name
+			//Cookie parsing is hard! It requires knowing CookieOrigin and having a defined CookieSpec.
+			//I'm just going to split the string in the case of multiple cookie headers
+			for(String cookie : headerValue.split("; "))
+			{
+				//Now, I'm going to cheat and just take everything before the equals ('=') sign.
+				int splitIndex = cookie.indexOf('=');
+				if (splitIndex < 0 ) continue;
+
+				String cookieName = cookie.substring(0, splitIndex);
+				if(!cookieWhiteList.contains(cookieName)) continue;
+				
+				String cookieValue = cookie.substring(splitIndex + 1, cookie.length());
+				retainedCookies.add(new BasicClientCookie(cookieName, cookieValue));
+			}
+		}
+		
+		return retainedCookies;
+	}
+	
+	/**
+	 * Adapted from org.apache.http.client.protocol.RequestAddCookies
+	 * 
+	 * Returns a list of headers that were added to the request
+	 */
+	public static void applyCookies(CookieStore cookieStore, List<Cookie> additionalCookie, CookieOrigin cookieOrigin, HttpRequestBase request)
+	{
+		//Since we recycle the request objects, we need to clear the cookies that were added from the previous execution.
 		request.removeHeaders(SM.COOKIE);
 		
 		final Date now = new Date();
@@ -99,18 +135,17 @@ public class CookieHandler
 		}
 		
 		// Per RFC 6265, 5.3
-		// The user agent must evict all expired cookies if, at any time, an expired cookie
-		// exists in the cookie store
+		// The user agent must evict all expired cookies if, at any time, an expired cookie exists in the cookie store
 		if (expired) cookieStore.clearExpired(now);
 		
-		// Generate Cookie request headers
+		//Add any white list cookies taken from the test plan
+		matchedCookies.addAll(additionalCookie);
+		
+		// Generate Cookie request header(s)
 		if (!matchedCookies.isEmpty())
 		{
-			final List<Header> headers = cookieSpec.formatCookies(matchedCookies);
-			for (final Header header : headers)
-			{
-				request.addHeader(header);
-			}
+			List<Header> headers = cookieSpec.formatCookies(matchedCookies);
+			for (final Header header : headers) request.addHeader(header);
 		}
 	}
 
@@ -138,5 +173,10 @@ public class CookieHandler
 		buf.append(", expiry:");
 		buf.append(cookie.getExpiryDate());
 		return buf.toString();
+	}
+
+	public static CookieSpec getCookieSpec()
+	{
+		return cookieSpec;
 	}
 }

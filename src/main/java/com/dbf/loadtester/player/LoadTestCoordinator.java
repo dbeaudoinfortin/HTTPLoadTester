@@ -11,6 +11,7 @@ import javax.management.ObjectName;
 
 import org.apache.http.client.HttpClient;
 
+import com.dbf.loadtester.common.action.converter.ApacheRequestConverter;
 import com.dbf.loadtester.common.httpclient.HTTPClientFactory;
 import com.dbf.loadtester.common.util.Utils;
 import com.dbf.loadtester.player.config.Constants;
@@ -137,15 +138,19 @@ public class LoadTestCoordinator implements Runnable
 			 public void run()
 			 {
 				 try
-				{
+				{	
+					//Initialize objects shared across threads 
 					HttpClient client = HTTPClientFactory.getHttpClient(config.getThreadCount() + 1);
 					
+					//Set retainCookie to false, since we let the CookieHanlder class take care of it.
+					ApacheRequestConverter requestConverter = new ApacheRequestConverter(config.getHost(), config.getHttpPort(), config.getHttpsPort(), true, false);
+
 					for (int i = 1; i < config.getThreadCount() + 1; i++)
 					{
 						synchronized(running)
 						{	
 							if(!running) return;
-							Thread thread = new Thread(new LoadTestThread(master, config, i, client), "Test Plan - " + i);
+							Thread thread = new Thread(new LoadTestThread(master, config, i, client, requestConverter), "Test Plan - " + i);
 							workerThreads.add(thread);
 							
 							log.info("Starting thread " + i);
