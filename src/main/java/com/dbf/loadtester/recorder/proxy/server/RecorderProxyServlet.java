@@ -23,6 +23,7 @@ import org.apache.http.client.utils.URIBuilder;
 import com.dbf.loadtester.common.action.HTTPConverter;
 import com.dbf.loadtester.common.httpclient.HTTPClientFactory;
 import com.dbf.loadtester.recorder.RecorderHttpServletRequestWrapper;
+import com.dbf.loadtester.recorder.proxy.RecorderProxyOptions;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,18 +33,9 @@ public class RecorderProxyServlet implements Servlet
 	private static final Logger log = LoggerFactory.getLogger(RecorderProxyServlet.class);
 	
 	public static final int MAX_CONNECTIONS = 20;
-	public static final String PARAM_PROXY_HTTP_PORT = "proxyHTTPPort";
-	public static final String PARAM_PROXY_HTTPS_PORT = "proxyHTTPSPort";
-	public static final String PARAM_LISTENER_HTTP_PORT = "listenerHTTPPort";
-	public static final String PARAM_LISTENER_HTTPS_PORT = "listenerHTTPSPort";
-	public static final String PARAM_PROXY_HOST = "proxyHost";
+	public static final String CONTEXT_OPTIONS_ATTRIBUTE = "options";
 	
-	private Integer proxyHTTPPort;
-	private Integer proxyHTTPSPort;
-	private Integer listenerHTTPPort;
-	private Integer listenerHTTPSPort;
-	private String proxyHost;
-	
+	private RecorderProxyOptions options;
 	private ServletConfig servletConfig;
 	
 	private HttpClient httpClient = HTTPClientFactory.getHttpClient(MAX_CONNECTIONS);
@@ -51,12 +43,8 @@ public class RecorderProxyServlet implements Servlet
 	@Override
 	public void init(ServletConfig servletConfig) throws ServletException
 	{
+		options = (RecorderProxyOptions) servletConfig.getServletContext().getAttribute(CONTEXT_OPTIONS_ATTRIBUTE);
 		this.servletConfig = servletConfig;
-		proxyHTTPPort = Integer.parseInt(servletConfig.getInitParameter(PARAM_PROXY_HTTP_PORT));
-		proxyHTTPSPort = Integer.parseInt(servletConfig.getInitParameter(PARAM_PROXY_HTTPS_PORT));
-		listenerHTTPPort = Integer.parseInt(servletConfig.getInitParameter(PARAM_LISTENER_HTTP_PORT));
-		listenerHTTPSPort = Integer.parseInt(servletConfig.getInitParameter(PARAM_LISTENER_HTTPS_PORT));
-		proxyHost = servletConfig.getInitParameter(PARAM_PROXY_HOST);
 	}
 
 	@Override
@@ -72,7 +60,7 @@ public class RecorderProxyServlet implements Servlet
 		HttpRequestBase httpMethod = null;
 		try
 		{
-			httpMethod = HTTPConverter.convertServletRequestToApacheRequest(wrappedRequest, proxyHost, proxyHTTPPort, proxyHTTPSPort);
+			httpMethod = HTTPConverter.convertServletRequestToApacheRequest(wrappedRequest, options.getForwardHost(), options.getForwardHTTPPort(), options.getForwardHTTPSPort(), options.isOverrideHostHeader());
 			HttpResponse response = httpClient.execute(httpMethod);
 			convertResponse(response, (HttpServletResponse) servletResponse, wrappedRequest);
 		}
@@ -102,6 +90,18 @@ public class RecorderProxyServlet implements Servlet
 		
 		httpServletResponse.setStatus(response.getStatusLine().getStatusCode());
 		
+		//In order to correctly support links, we must do some special voodoo.
+		//We have to ensure that all the links intended for the original host are actually link back to us. 
+		//1) Some link are relative, and the browser appends them to the host. These are fine.
+		//2) Some are absolute and must be changed.
+		//3) Others are dynamic, depending on what the 'Host' header is in the request. These are tricky and 
+		//may or may not be correct depending on the overrideHostHeader flag.
+		//From the proxy's point of view, it's not possible to distinguish cases 2) and 3).
+		//if(replaceLinks)
+		//{
+			
+		//}
+		
 		HttpEntity entity = response.getEntity();
 		if(entity != null)
 		{
@@ -119,18 +119,18 @@ public class RecorderProxyServlet implements Servlet
 			//Use the URI object to handle parsing
 			URI uri = new URI(originalHeaderValue);
 			String uriHost = uri.getHost().toLowerCase();
-			if(proxyHost.equals(uriHost))
+			if(options.getForwardHost().equals(uriHost))
 			{
 				//The ports must also match. Since the port may not be explicitly defined,
 				//use the defaults depending on HTTP or HTTPS
-				boolean isHTTPs = uri.getScheme().equalsIgnoreCase("https");
-				int uriPort = (uri.getPort() > 0) ? uri.getPort() : (isHTTPs ? 443 : 80);
-				int proxyPort = isHTTPs ? proxyHTTPSPort : proxyHTTPPort;
+				boolean isHTTPS = uri.getScheme().equalsIgnoreCase("https");
+				int uriPort = (uri.getPort() > 0) ? uri.getPort() : (isHTTPS ? 443 : 80);
+				int proxyPort = isHTTPS ? options.getForwardHTTPSPort() : options.getForwardHTTPPort();
 				if(uriPort == proxyPort)
 				{
 					URIBuilder newUriBuilder = new URIBuilder(uri);
 					newUriBuilder.setHost(originalRequestHostName);
-					newUriBuilder.setPort(isHTTPs ? listenerHTTPSPort : listenerHTTPPort);
+					newUriBuilder.setPort(isHTTPS ? options.getHttpsPort() : options.getForwardHTTPPort());
 					return newUriBuilder.toString();
 				}
 			}

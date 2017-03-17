@@ -35,6 +35,7 @@ public class RecorderProxyOptions
 		options.addOption("restPort", true, "Port to use for REST API managment interface.");
 		options.addOption("disableREST", false, "Disable the REST API managment interface.");
 		options.addOption("disableJMX", false, "Disable the JMX managment interface.");
+		options.addOption("overrideHostHeader", false, "Overrides the 'Host' header on every request match the forwarding host");
 	}
 
 	private String directory;
@@ -47,6 +48,7 @@ public class RecorderProxyOptions
 	private Integer restPort = Constants.DEFAULT_RECORDER_REST_PORT;
 	private boolean disableREST = false;
 	private boolean disableJMX = false;
+	private boolean overrideHostHeader = true;
 	
 	private Map<String, String> pathSubs;
 	private Map<String, String> querySubs;
@@ -68,6 +70,7 @@ public class RecorderProxyOptions
 		
 		disableREST = cmd.hasOption("disableREST");
 		disableJMX = cmd.hasOption("disableJMX");
+		setOverrideHostHeader(cmd.hasOption("overrideHostHeader"));
 				
 		directory = cmd.getOptionValue("dir");
 		
@@ -275,5 +278,15 @@ public class RecorderProxyOptions
 	public boolean isDisableJMX()
 	{
 		return disableJMX;
+	}
+
+	public boolean isOverrideHostHeader()
+	{
+		return overrideHostHeader;
+	}
+
+	public void setOverrideHostHeader(boolean overrideHostHeader)
+	{
+		this.overrideHostHeader = overrideHostHeader;
 	}
 }

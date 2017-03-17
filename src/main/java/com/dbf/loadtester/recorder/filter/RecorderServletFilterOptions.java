@@ -2,6 +2,10 @@ package com.dbf.loadtester.recorder.filter;
 
 import java.util.Map;
 
+/**
+ * Options specific to the Recorder Servlet Filter
+ *
+ */
 public class RecorderServletFilterOptions
 {
 	private String testPlanDirectory;

@@ -3,10 +3,13 @@ package com.dbf.loadtester.common.action;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.Collection;
 import java.util.Date;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Map;
+
+import javax.servlet.http.Part;
 
 import org.apache.http.HttpEntity;
 import org.apache.http.client.methods.HttpDelete;
@@ -19,6 +22,7 @@ import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.entity.ContentType;
+import org.apache.http.entity.mime.MultipartEntityBuilder;
 
 import com.dbf.loadtester.recorder.RecorderHttpServletRequestWrapper;
 
@@ -55,7 +59,7 @@ public class HTTPConverter
 	 */
 	public static HttpRequestBase convertHTTPActionToApacheRequest(HTTPAction action, String host, int httpPort, int httpsPort) throws URISyntaxException
 	{
-		return buildApacheRequest(action.getScheme(), host, host, httpPort, httpsPort, action.getQueryString(), action.getPath(), action.getMethod(), action.getHeaders(), action.getContent().getBytes(), action.getContentType(), false);
+		return buildApacheRequest(action.getScheme(), host, httpPort, httpsPort, action.getQueryString(), action.getPath(), action.getMethod(), action.getHeaders(), action.getContent().getBytes(), action.getContentType(), false, true);
 	}
 	
 	/**
@@ -63,10 +67,11 @@ public class HTTPConverter
 	 * 
 	 * Used by the Recorder Proxy to forward requests
 	 */
-	public static HttpRequestBase convertServletRequestToApacheRequest(RecorderHttpServletRequestWrapper httpRequest, String host, int httpPort, int httpsPort) throws URISyntaxException
+	public static HttpRequestBase convertServletRequestToApacheRequest(RecorderHttpServletRequestWrapper httpRequest, String host, int httpPort, int httpsPort, boolean overrideHostHeader) throws URISyntaxException
 	{
-		return buildApacheRequest(httpRequest.getScheme(), host, httpRequest.getServerName(), httpPort, httpsPort, httpRequest.getQueryString(), httpRequest.getPathInfo(), httpRequest.getMethod(), extractHeaders(httpRequest),
-				httpRequest.getRequestBody(), httpRequest.getContentType(), true);
+
+		return buildApacheRequest(httpRequest.getScheme(), host, httpPort, httpsPort, httpRequest.getQueryString(), httpRequest.getPathInfo(), httpRequest.getMethod(), extractHeaders(httpRequest),
+				httpRequest.getRequestBody(), httpRequest.getContentType(), true, overrideHostHeader);
 	}
 	
 	/**
@@ -100,7 +105,7 @@ public class HTTPConverter
 	 * 
 	 * Used by the Player for load testing and by the Recorder Proxy for forwarding requests.
 	 */
-	private static HttpRequestBase buildApacheRequest(String scheme, String host, String hostHeader, int httpPort, int httpsPort, String queryString, String path, String method, Map<String,String> headers, byte[] content, String contentType, boolean retainCookies) throws URISyntaxException
+	private static HttpRequestBase buildApacheRequest(String scheme, String host, int httpPort, int httpsPort, String queryString, String path, String method, Map<String,String> headers, byte[] content, String contentType, boolean retainCookies, boolean overrideHostHeader) throws URISyntaxException
 	{
 		URI uri = buildURI(scheme, host, httpPort, httpsPort, queryString, path);
 		String actionMethod = method.toUpperCase();
@@ -130,12 +135,16 @@ public class HTTPConverter
 			default:
 				return null;	
 		}
-		
+
 		//Apply the content
 		if(hasContent)
 		{
+			//MultipartEntityBuilder builder;
+			
+	
 			HttpEntity requestEntity = new ByteArrayEntity(content, (contentType == null || contentType.equals("")) ? null : ContentType.parse(contentType));
 			((HttpEntityEnclosingRequestBase) httpMethod).setEntity(requestEntity);
+		
 		}
 		
 		//Process special headers
@@ -150,12 +159,24 @@ public class HTTPConverter
 				//It good practice to treat headers as case-insensitive
 				String headerNameLowerCase = headerName.toLowerCase();
 				
-				//Override the host since it won't match
-				//For the load tester, this should be the target host
-				//For the Recorder Proxy, this the hostname of he proxy machine
-				if(headerNameLowerCase.equals("host"))
+				//Note about he overrideHostHeader flag: Sometimes we want to override the host and sometimes we don't.
+				//In the case of the Load Test Player, we always want to override it because the header saved in in the test plan won't match.
+				//However, for the Recorder Proxy, it's very tricky.
+				//The host header will be set to whatever was typed in the browser's address bar. A website may use the host header for it's
+				//own internal routing, in which case we must override it because the address to the recorder proxy will not be correct. 
+				//The website may also use the host name for assembling links, in which case we don't want to override the header because 
+				//otherwise the link would no longer point back to the proxy. Inspecting and modifying any links in the response may help, 
+				//but is not 100% foolproof.  
+				if(overrideHostHeader && headerNameLowerCase.equals("host"))
 				{
-					httpMethod.addHeader(headerName, hostHeader);
+					boolean isHTTPs = scheme.equalsIgnoreCase("https");
+					String port;
+					if(isHTTPs)
+						port = (httpsPort == 443) ? "" : (":" + httpsPort);
+					else
+						port = (httpPort == 80) ? "" : (":" + httpPort);
+						
+					httpMethod.addHeader(headerName, host + port);
 					continue;
 				}
 				
@@ -194,6 +215,14 @@ public class HTTPConverter
 		uriBuilder.setCustomQuery((queryString != null && queryString.equals("")) ? null : queryString);
 		uriBuilder.setPath((path != null && path.equals("")) ? null : path);
 		return uriBuilder.build();
+	}
+	
+	private static void convertServletParts(Collection<Part> parts)
+	{
+		for(Part part : parts)
+		{
+			//finish me
+		}
 	}
 	
 }

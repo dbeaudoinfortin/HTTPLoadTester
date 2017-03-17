@@ -27,7 +27,7 @@ import org.slf4j.LoggerFactory;
 /**
  * Records incoming HTTP requests and saves them to disk
  * 
- * Note that this only support a single test case at a time.
+ * Note that this only support a single test plan at a time.
  *
  */
 public class RecorderBase

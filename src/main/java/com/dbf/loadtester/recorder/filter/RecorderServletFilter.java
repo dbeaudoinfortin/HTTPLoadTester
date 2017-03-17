@@ -23,7 +23,11 @@ import org.slf4j.LoggerFactory;
 
 /**
  * Servlet Filter version of the recorder.
+ * 
+ * Should only contain Filter-specific code, everything else should be in the RecorderBase
  *
+ * This filter is designed so that it does not require the use of the RecorderProxy. It may
+ * be inserted into any modern Web Server that follows the Servlet specification.
  */
 public class RecorderServletFilter extends RecorderBase implements Filter
 {
