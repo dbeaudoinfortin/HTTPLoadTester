@@ -171,9 +171,11 @@ public class RecorderBase
 	{
 		if(null != testPlanWriter)
 		{
+			//Note: The individual write() and flush() methods are synchronized by
+			//the Writer, so making a single call to write() is safe. Multiple calls
+			//would need to be externally synchronized.
 			log.info("Recording Action: " + action);
-			testPlanWriter.write(JsonEncoder.toJson(action));
-			testPlanWriter.newLine();
+			testPlanWriter.write(JsonEncoder.toJson(action) + Utils.NEW_LINE);
 			testPlanWriter.flush();
 		}
 	}
