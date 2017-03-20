@@ -6,6 +6,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.regex.Pattern;
 
+import org.apache.http.Header;
 import org.slf4j.ILoggerFactory;
 import org.slf4j.LoggerFactory;
 
@@ -49,6 +50,7 @@ public class Utils
 		}
 		
 	}
+	
 	public static void flushAllLogs()
 	{
 		ILoggerFactory loggerFactory = LoggerFactory.getILoggerFactory();
@@ -58,4 +60,16 @@ public class Utils
 		    context.stop();
 		}
 	}
+	
+	public static String determineContentType(Header header)
+	{
+		if (null == header) return "";
+		if(null == header.getValue()) return "";
+		
+		int splitIndex = header.getValue().indexOf(';');
+		String contentType = (splitIndex < 0) ? header.getValue() :  header.getValue().substring(0, splitIndex);
+		
+		return contentType.trim().toLowerCase();
+	}
+	
 }

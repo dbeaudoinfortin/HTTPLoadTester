@@ -23,19 +23,20 @@ public class RecorderProxyOptions
 	static
 	{
 		options.addOption("dir", true, "The test plan directory. Recorded test plans will be saved in this directory.");	
-		options.addOption("httpPort", true, "Listener HTTP port");
-		options.addOption("httpsPort", true, "Listener HTTPS port");
-		options.addOption("fHost", true, "Proxy forwarding host");
-		options.addOption("fHttpPort", true, "Proxy forwarding HTTP port");
-		options.addOption("fHttpsPort", true, "Proxy forwarding HTTPS port");
-		options.addOption("start", false, "Start recording immediately");
-		options.addOption("pathSubs", true, "Path Substitutions in Base64 encoded Json format");
-		options.addOption("querySubs", true, "Query Substitutions in Base64 encoded Json format");
-		options.addOption("bodySubs", true, "Body Substitutions in Base64 encoded Json format");
+		options.addOption("httpPort", true, "Listener HTTP port.");
+		options.addOption("httpsPort", true, "Listener HTTPS port.");
+		options.addOption("fHost", true, "Proxy forwarding host.");
+		options.addOption("fHttpPort", true, "Proxy forwarding HTTP port.");
+		options.addOption("fHttpsPort", true, "Proxy forwarding HTTPS port.");
+		options.addOption("start", false, "Start recording immediately.");
+		options.addOption("pathSubs", true, "Path Substitutions in Base64 encoded Json format.");
+		options.addOption("querySubs", true, "Query Substitutions in Base64 encoded Json format.");
+		options.addOption("bodySubs", true, "Body Substitutions in Base64 encoded Json format.");
 		options.addOption("restPort", true, "Port to use for REST API managment interface.");
 		options.addOption("disableREST", false, "Disable the REST API managment interface.");
 		options.addOption("disableJMX", false, "Disable the JMX managment interface.");
-		options.addOption("overrideHostHeader", false, "Overrides the 'Host' header on every request match the forwarding host");
+		options.addOption("overrideHostHeader", false, "Overrides the 'Host' header on every request to match the forwarding host.");
+		options.addOption("rewriteUrls", false, "Inspects the response of every HTTP request and attempts to rewrite URLs to point back to the proxy.");
 	}
 
 	private String directory;
@@ -49,6 +50,7 @@ public class RecorderProxyOptions
 	private boolean disableREST = false;
 	private boolean disableJMX = false;
 	private boolean overrideHostHeader = true;
+	private boolean rewriteUrls = false;
 	
 	private Map<String, String> pathSubs;
 	private Map<String, String> querySubs;
@@ -70,7 +72,8 @@ public class RecorderProxyOptions
 		
 		disableREST = cmd.hasOption("disableREST");
 		disableJMX = cmd.hasOption("disableJMX");
-		setOverrideHostHeader(cmd.hasOption("overrideHostHeader"));
+		overrideHostHeader = cmd.hasOption("overrideHostHeader");
+		rewriteUrls = cmd.hasOption("rewriteUrls");
 				
 		directory = cmd.getOptionValue("dir");
 		
@@ -288,5 +291,15 @@ public class RecorderProxyOptions
 	public void setOverrideHostHeader(boolean overrideHostHeader)
 	{
 		this.overrideHostHeader = overrideHostHeader;
+	}
+
+	public boolean isRewriteUrls()
+	{
+		return rewriteUrls;
+	}
+
+	public void setRewriteUrls(boolean rewriteUrls)
+	{
+		this.rewriteUrls = rewriteUrls;
 	}
 }
