@@ -122,7 +122,12 @@ public class LoadTestThread implements Runnable
 			//Handle termination of the test plan via JMX/REST
 			if(!master.isRunning()) return;
 			
-			//By-pass Test Plan timings for debug purposes
+			//Do all pre-action prep
+			//Do this before waiting so that the time it takes to prep is not added
+			//to the execution time of the action (or a adds as little as possible)
+			preActionRun(action);
+			
+			//By-pass Test Plan timings if desired
 			long waitTime = (actionDelay < 0 ? action.getTimePassed() : actionDelay);
 			
 			//Ensure that the start time of every action matches the timings in the test plan
@@ -134,35 +139,47 @@ public class LoadTestThread implements Runnable
 				currentTime = System.currentTimeMillis();
 			}
 			
+			//Note that test plan timings are calculated from the start of execution of the last action
+			//NOT from the end of execution of the last action.
 			lastActionTime = currentTime;
 			
 			//Run the action and store the duration
-			//Not that the duration is the server response time including network delay
+			//Note that the duration is the server response time including network delay
 			//It does not include the overhead of this thread
-			Long duration =	runAction(action);
+			HttpResponse response =	runAction(action);
+			globalPlayerStats.recordActionTime(action.getIdentifier(), action.getLastRunDuration());
 			
-			if (null != duration)
-				globalPlayerStats.recordActionTime(action.getIdentifier(), duration);
+			//Handle all post-run processing
+			postActionRun(action, response);
 		}
 	}
 	
-	private Long runAction(PlayerHTTPAction action) throws Exception
+	private void preActionRun(PlayerHTTPAction action) throws Exception
+	{	
+		//If the action has not been converted to an HTTP Request, due to variable substitutions, do it now.
+		if(null == action.getHttpRequest()) action.setHttpRequest(requestConverter.convertHTTPActionToApacheRequest(action));
+		
+		//Apply any relevant non-expired cookies
+		CookieHandler.applyCookies(cookieStore, action.getWhiteListCookies(), action.getCookieOrigin(), action.getHttpRequest());
+	}
+	
+	private void postActionRun(PlayerHTTPAction action, HttpResponse response)
+	{
+		//Store any cookies for subsequent calls
+		CookieHandler.storeCookie(cookieStore, action.getCookieOrigin(), response);
+	}
+	
+	private HttpResponse runAction(PlayerHTTPAction action) throws Exception
 	{
 		if(null == action.getHttpRequest())
-		{
-			log.error("Cannot execute action " + action + ". Method " + action.getMethod() + " is not supported.");
-			return null;
-		}
-
+			throw new Exception("Cannot execute action " + action + ". Method " + action.getMethod() + " is not supported.");
+		
 		long startTime;
 		long endTime;
 		HttpResponse response = null;
 		HttpRequestBase request = action.getHttpRequest();
 		try
 		{
-			//Apply any relevant non-expired cookies
-			CookieHandler.applyCookies(cookieStore, action.getWhiteListCookies(), action.getCookieOrigin(), request);
-			
     		startTime = System.currentTimeMillis();
     		response = httpClient.execute(request);
     		
@@ -172,15 +189,10 @@ public class LoadTestThread implements Runnable
     		if(null != entity) Utils.discardStream(entity.getContent());
 
     		endTime = System.currentTimeMillis();
-    		
-    		//Store any cookies for subsequent calls
-    		CookieHandler.storeCookie(cookieStore, action.getCookieOrigin(), response);
-    		
 		}
 		catch(Exception e)
 		{
-			log.error("Failed to execute HTTP Action " + action, e);
-    		throw e;
+    		throw new Exception("Failed to execute HTTP Action " + action, e);
 		}
     	finally
 		{
@@ -189,7 +201,9 @@ public class LoadTestThread implements Runnable
 		}
 		
 		log.info("Thread " + threadNumber + " recieved HTTP code " + response.getStatusLine().getStatusCode() + " for action " + action + ".");
-		return endTime - startTime;
+		action.setLastRunDuration(endTime - startTime);
+		
+		return response;
 	}
 	
 	private void initSubstitutions()
@@ -230,14 +244,17 @@ public class LoadTestThread implements Runnable
 			playerAction.setCookieOrigin(CookieHandler.determineCookieOrigin(host, (isSecure ? httpsPort : httpPort), playerAction.getPath(), isSecure));
 			
 			//We re-use Apache HTTP Client Requests for better performance, so pre-generate it.
+			
+			/* TODO: Temporary Hack for Vaadin Support
 			try
 			{
-				playerAction.setHttpRequest(requestConverter.convertHTTPActionToApacheRequest(playerAction));
+				//playerAction.setHttpRequest(requestConverter.convertHTTPActionToApacheRequest(playerAction));
 			}
 			catch (URISyntaxException e)
 			{
 				throw new RuntimeException("Failed to convert HTTP Action " + source, e);
 			}
+			*/
 			
 			//Generally, we don't want to use the cookies saved in the test plan, at the time of recording
 			//since these are out of date. However, there are exceptions. 

@@ -23,6 +23,7 @@ public class PlayerHTTPAction extends HTTPAction
 	private transient CookieOrigin cookieOrigin;
 	private transient List<Cookie> whiteListCookies;
 	private transient String identifier;
+	private transient long lastRunDuration = -1;
 	
 	public PlayerHTTPAction(HTTPAction other)
 	{
@@ -78,6 +79,16 @@ public class PlayerHTTPAction extends HTTPAction
 	public String getIdentifier()
 	{
 		return identifier;
+	}
+
+	public long getLastRunDuration()
+	{
+		return lastRunDuration;
+	}
+
+	public void setLastRunDuration(long lastRunDuration)
+	{
+		this.lastRunDuration = lastRunDuration;
 	}
 
 	@Override
