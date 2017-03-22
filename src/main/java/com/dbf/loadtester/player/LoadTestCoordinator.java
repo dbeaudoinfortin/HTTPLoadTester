@@ -153,7 +153,7 @@ public class LoadTestCoordinator implements Runnable
 					for (int i = 1; i < config.getThreadCount() + 1; i++)
 					{
 						//Apply the per-thread HTTP client if needed.
-						if(client == null) client = HTTPClientFactory.getHttpClient(1);
+						if(!config.isShareConnections()) client = HTTPClientFactory.getHttpClient(1);
 
 						synchronized(running)
 						{	
