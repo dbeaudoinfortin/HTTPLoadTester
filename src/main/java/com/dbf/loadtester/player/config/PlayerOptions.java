@@ -43,7 +43,7 @@ public class PlayerOptions
 		options.addOption("restPort", true, "Port to use for REST API managment interface.");
 		options.addOption("disableREST", false, "Disable the REST API managment interface.");
 		options.addOption("disableJMX", false, "Disable the JMX managment interface.");
-		//options.addOption("disableRedirects", false, "Disables the following 3xx redirects.");
+		options.addOption("shareConnections", false, "Share connections (sockets) accross threads for improved efficiency.");
 	}
 	
 	private String host = Constants.DEFAULT_HOST;
@@ -61,7 +61,7 @@ public class PlayerOptions
 	private boolean keepAlive = false;
 	private boolean disableREST = false;
 	private boolean disableJMX = false;
-	//private boolean disableRedirects = false;
+	private boolean shareConnections = false;
 	private List<HTTPAction> actions;
 	private PlayerStats globalPlayerStats = new PlayerStats();
 	private Collection<String> cookieWhiteList = new HashSet<String>();
@@ -115,13 +115,11 @@ public class PlayerOptions
 			log.info("Substitutions will be applied to the Test Plan.");
 		}
 		
-		/*
-		if(cmd.hasOption("disableRedirects"))
+		if(cmd.hasOption("shareConnections"))
 		{
-			disableRedirects = true;
-			log.info("Disable Redirects flag set, 3xx redirection responses will be ignored.");
+			shareConnections = true;
+			log.info("Share Connections flag set, a single client and connection pool will be used across all threads of the load tester.");
 		}
-		*/
 		
 		if(cmd.hasOption("disableREST"))
 		{
@@ -410,17 +408,15 @@ public class PlayerOptions
 		return disableJMX;
 	}
 
-	/*
-	public boolean isDisableRedirects()
+	public boolean isShareConnections()
 	{
-		return disableRedirects;
+		return shareConnections;
 	}
 
-	public void setDisableRedirects(boolean disableRedirects)
+	public void setShareConnections(boolean shareConnections)
 	{
-		this.disableRedirects = disableRedirects;
+		this.shareConnections = shareConnections;
 	}
-	 */
 	
 	public Collection<String> getCookieWhiteList()
 	{

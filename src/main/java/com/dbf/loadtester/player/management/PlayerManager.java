@@ -36,7 +36,6 @@ public class PlayerManager implements PlayerManagerMBean
 	@Override
 	public int getRunningThreadCount()
 	{
-		// TODO Auto-generated method stub
 		return master.getRunningThreadCount();
 	}
 
@@ -207,19 +206,17 @@ public class PlayerManager implements PlayerManagerMBean
 		return config.getGlobalPlayerStats().getAggregateActionStats();
 	}	
 	
-	/*
 	@Override
-	public boolean isDisableRedirects()
+	public boolean isShareConnections()
 	{
-		return config.isDisableRedirects();
+		return config.isShareConnections();
 	}
 	
 	@Override
-	public void setDisableRedirects(boolean disableRedirects)
+	public void setShareConnections(boolean shareConnections)
 	{
-		config.setDisableRedirects(disableRedirects);
+		config.setShareConnections(shareConnections);
 	}
-	*/
 	
 	@Override
 	public List<String> getCookieWhiteList()

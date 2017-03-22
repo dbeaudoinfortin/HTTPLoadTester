@@ -217,24 +217,22 @@ public class PlayerManagementEndpoint
 		return manager.getAggregateActionStats();
 	}
 	
-	/*
 	@GET
-	@Path("/disableRedirects")
+	@Path("/shareConnections")
 	@Produces({ MediaType.APPLICATION_JSON })
-	public Boolean disableRedirects()
+	public Boolean shareConnections()
 	{
-		return manager.isDisableRedirects();
+		return manager.isShareConnections();
 	}
 	
 	@POST
-	@Path("/disableRedirects")
+	@Path("/shareConnections")
 	@Consumes({ MediaType.APPLICATION_JSON })
-	public Response disableRedirects(Boolean disableRedirects)
+	public Response shareConnections(Boolean shareConnections)
 	{
-		manager.setDisableRedirects(disableRedirects);
+		manager.setShareConnections(shareConnections);
 		return Response.ok().build();
 	}
-	*/
 	
 	@POST
 	@Path("/cookieWhiteList")

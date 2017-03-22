@@ -61,11 +61,9 @@ public interface PlayerManagerMBean
 	
 	public TimeStats getAggregateActionStats();
 	
-	/*
-	public boolean isDisableRedirects();
-	
-	public void setDisableRedirects(boolean disableRedirects);
-	*/
+	public boolean isShareConnections();
+
+	public void setShareConnections(boolean shareConnections);
 	
 	public List<String> getCookieWhiteList();
 

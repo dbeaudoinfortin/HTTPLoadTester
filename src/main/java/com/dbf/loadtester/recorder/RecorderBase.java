@@ -8,9 +8,11 @@ import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Random;
+import java.util.Set;
 import java.util.regex.Pattern;
 
 import javax.servlet.ServletRequest;
@@ -35,6 +37,7 @@ public class RecorderBase
 	private static final Logger log = LoggerFactory.getLogger(RecorderBase.class);
 		
 	private static final String DEFAULT_DIRECTORY_PATH = Utils.isWindows() ? "C:\\temp\\httploadtester\\" : "/var/httploadtester/";
+	private static final Set<String> ignoredExtensions = new HashSet<String>();
 	
 	private static final String PARAM_MAGIC_START = "MAGIC_START_PARAM";
 	private static final String PARAM_MAGIC_STOP  = "MAGIC_STOP_PARAM";
@@ -55,6 +58,18 @@ public class RecorderBase
 	private Map<Pattern, String> bodySubs = new HashMap<Pattern, String>();
 	private Map<Pattern, String> querySubs = new HashMap<Pattern, String>();
 	
+	static
+	{
+		ignoredExtensions.add("png");
+		ignoredExtensions.add("css");
+		ignoredExtensions.add("woff");
+		ignoredExtensions.add("jpg");
+		ignoredExtensions.add("jpeg");
+		ignoredExtensions.add("gif");
+		ignoredExtensions.add("js");
+		ignoredExtensions.add("map");
+	}
+	
 	public ServletRequest handleHTTPRequest(HttpServletRequest httpRequest)
 	{
 		try
@@ -66,6 +81,9 @@ public class RecorderBase
 			
 			//Don't capture control requests
 			if(handleParams(httpRequest) || !running) return httpRequest;
+			
+			//Ignore static files, we typically don't need to load test these
+			if(ignoreExtension(httpRequest.getPathInfo())) return httpRequestWrapper;
 			
 			Date currentDate = new Date();
 		
@@ -207,6 +225,17 @@ public class RecorderBase
 			returnMap.put(entry.getKey().pattern(), entry.getValue());
 		}
 		return returnMap;
+	}
+	
+	private boolean ignoreExtension(String path)
+	{
+		if(path == null || path.equals("")) return false;
+		
+		int extensionIndex = path.lastIndexOf('.');
+		if (extensionIndex < 1) return false; 
+		
+		final String extension = path.substring(extensionIndex + 1).toLowerCase();
+		return ignoredExtensions.contains(extension);
 	}
 	
 	public Path getTestPlanDirectory() {

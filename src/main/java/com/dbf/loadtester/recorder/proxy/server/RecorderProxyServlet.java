@@ -97,7 +97,7 @@ public class RecorderProxyServlet implements Servlet
 		int responseStatusCode = incomingApacheResponse.getStatusLine().getStatusCode();
 		outgoingServletResponse.setStatus(responseStatusCode);
 		
-		if(responseStatusCode >= 300) 
+		if(responseStatusCode >= 300 && responseStatusCode != 304) 
 			log.warn("Received code " + responseStatusCode + " for action " + incomingServletRequest.getMethod() + " " + incomingServletRequest.getPathInfo());
 		
 		//Process headers
@@ -126,8 +126,9 @@ public class RecorderProxyServlet implements Servlet
 				//3) Others are dynamic, depending on what the 'Host' header is in the request. These are tricky and 
 				//may or may not be correct depending on the overrideHostHeader flag.
 				//From the proxy's point of view, it's not possible to distinguish cases 2) and 3).
-				String content = rewriteURLs(IOUtils.toString(entity.getContent()), incomingServletRequest.getServerName());
-				IOUtils.write(content, outgoingServletResponse.getOutputStream());
+				byte[] bytes = rewriteURLs(IOUtils.toString(entity.getContent()), incomingServletRequest.getServerName()).getBytes();
+				outgoingServletResponse.setContentLengthLong(bytes.length);
+				IOUtils.write(bytes, outgoingServletResponse.getOutputStream());
 			}
 			else
 			{

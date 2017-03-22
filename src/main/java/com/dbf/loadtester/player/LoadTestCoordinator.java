@@ -139,14 +139,22 @@ public class LoadTestCoordinator implements Runnable
 			 {
 				 try
 				{	
-					//Initialize objects shared across threads 
-					HttpClient client = HTTPClientFactory.getHttpClient(config.getThreadCount() + 1);
-					
+					//Initialize the HTTPClient to share across threads. The most efficient way is to share the client across all threads of the load tester
+					//using a connection pool that is as large as the thread pool. This ensures each thread will have a connection but that they will re-use
+					//connections whenever possible. However, this poses a problem with some load balancers that use sticky sessions since they will assign
+					//the same node of the cluster as long as the connection remains open. This would mean that all load tester threads would be stuck to
+					//a single node. Not good :(
+					HttpClient client = null;
+					if(config.isShareConnections()) client = HTTPClientFactory.getHttpClient(config.getThreadCount() + 1);
+			
 					//Set retainCookie to false, since we let the CookieHanlder class take care of it.
 					ApacheRequestConverter requestConverter = new ApacheRequestConverter(config.getHost(), config.getHttpPort(), config.getHttpsPort(), true, false);
 
 					for (int i = 1; i < config.getThreadCount() + 1; i++)
 					{
+						//Apply the per-thread HTTP client if needed.
+						if(client == null) client = HTTPClientFactory.getHttpClient(1);
+
 						synchronized(running)
 						{	
 							if(!running) return;
