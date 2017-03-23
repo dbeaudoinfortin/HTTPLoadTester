@@ -14,6 +14,8 @@ import org.apache.http.client.CookieStore;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.impl.client.BasicCookieStore;
+
+import com.dbf.loadtester.common.action.ActionVariable;
 import com.dbf.loadtester.common.action.HTTPAction;
 import com.dbf.loadtester.common.action.converter.ApacheRequestConverter;
 import com.dbf.loadtester.common.util.Utils;
@@ -32,7 +34,9 @@ public class LoadTestThread implements Runnable
 	private static final String THREAD_ID_PARAM = "<THREAD_ID>";
 	private static final Pattern THREAD_ID_PARAM_PATTERN = Pattern.compile(THREAD_ID_PARAM);
 
-	private Map<Pattern, String> substitutions;
+	private Map<Pattern, String> staticSubstitutions;
+	private List<ActionVariable> variableSubstitutions;
+	
 	private final CookieStore cookieStore = new BasicCookieStore();
 	
 	private final HttpClient httpClient;	
@@ -156,6 +160,12 @@ public class LoadTestThread implements Runnable
 	
 	private void preActionRun(PlayerHTTPAction action) throws Exception
 	{	
+		//Apply any variables
+		if(action.isHasVariables())
+		{
+			blah, do it;
+		}
+			
 		//If the action has not been converted to an HTTP Request, due to variable substitutions, do it now.
 		if(null == action.getHttpRequest()) action.setHttpRequest(requestConverter.convertHTTPActionToApacheRequest(action));
 		
@@ -165,6 +175,8 @@ public class LoadTestThread implements Runnable
 	
 	private void postActionRun(PlayerHTTPAction action, HttpResponse response)
 	{
+		//Extract any variables
+		
 		//Store any cookies for subsequent calls
 		CookieHandler.storeCookie(cookieStore, action.getCookieOrigin(), response);
 	}
@@ -211,8 +223,8 @@ public class LoadTestThread implements Runnable
 		//These are built-in replacement string
 		//These are calculated ahead of time for better performance
 		//Currently there is only Thread Number, more will be added later
-		substitutions = new HashMap<Pattern, String>();
-		substitutions.put(THREAD_ID_PARAM_PATTERN, "" + threadNumber);
+		staticSubstitutions = new HashMap<Pattern, String>();
+		staticSubstitutions.put(THREAD_ID_PARAM_PATTERN, "" + threadNumber);
 	}
 	
 	/**
@@ -229,38 +241,39 @@ public class LoadTestThread implements Runnable
 		int id = 1;
 		for(HTTPAction source : actions)
 		{
-			PlayerHTTPAction playerAction = new PlayerHTTPAction(source);
-			playerHTTPActions.add(playerAction);
-			playerAction.setId(id);
+			PlayerHTTPAction action = new PlayerHTTPAction(source);
+			playerHTTPActions.add(action);
+			action.setId(id);
 			
 			//Apply substitutions before converting to HTTPMethod
-			if(useSubstitutions) applySubstitutions(playerAction);
+			if(useSubstitutions && action.isHasSubstitutions()) applySubstitutions(action);
 			
 			//Handle HTTPs override
-			if(overrideHttps) playerAction.setScheme("http");
+			if(overrideHttps) action.setScheme("http");
 			
 			//Pre-compute the cookie origin for each request. This will be different for every action depending on the Path.
-			boolean isSecure = playerAction.getScheme().equalsIgnoreCase("https");
-			playerAction.setCookieOrigin(CookieHandler.determineCookieOrigin(host, (isSecure ? httpsPort : httpPort), playerAction.getPath(), isSecure));
+			boolean isSecure = action.getScheme().equalsIgnoreCase("https");
+			action.setCookieOrigin(CookieHandler.determineCookieOrigin(host, (isSecure ? httpsPort : httpPort), action.getPath(), isSecure));
 			
 			//We re-use Apache HTTP Client Requests for better performance, so pre-generate it.
-			
-			/* TODO: Temporary Hack for Vaadin Support
-			try
+			//But, we can only pre-generate it if there are no variables in the action.
+			if(!action.isHasVariables())
 			{
-				//playerAction.setHttpRequest(requestConverter.convertHTTPActionToApacheRequest(playerAction));
+				try
+				{
+					action.setHttpRequest(requestConverter.convertHTTPActionToApacheRequest(action));
+				}
+				catch (URISyntaxException e)
+				{
+					throw new RuntimeException("Failed to convert HTTP Action " + source, e);
+				}
 			}
-			catch (URISyntaxException e)
-			{
-				throw new RuntimeException("Failed to convert HTTP Action " + source, e);
-			}
-			*/
 			
 			//Generally, we don't want to use the cookies saved in the test plan, at the time of recording
 			//since these are out of date. However, there are exceptions. 
 			//For example, the cookie may contain authentication or authorization.
 			//So, we provide a cookie white list that we want to retain.
-			playerAction.setWhiteListCookies(CookieHandler.applyWhiteListCookies(playerAction.getHeaders(), cookieWhiteList));
+			action.setWhiteListCookies(CookieHandler.applyWhiteListCookies(action.getHeaders(), cookieWhiteList));
 			
 			id++;
 		}
@@ -270,15 +283,15 @@ public class LoadTestThread implements Runnable
 	private void applySubstitutions(HTTPAction action)
 	{
 		if(action.getPath() != null)
-			action.setPath(Utils.applyRegexSubstitutions(action.getPath(), substitutions));
+			action.setPath(Utils.applyRegexSubstitutions(action.getPath(), staticSubstitutions));
 		
 		if(action.getQueryString() != null)
-			action.setQueryString(Utils.applyRegexSubstitutions(action.getQueryString(), substitutions));
+			action.setQueryString(Utils.applyRegexSubstitutions(action.getQueryString(), staticSubstitutions));
 		
 		//Body only applies to post and put
 		if(action.getContent() != null && ("PUT".equals(action.getMethod()) || "POST".equals(action.getMethod())))
 		{
-			String content = Utils.applyRegexSubstitutions(action.getContent(), substitutions);
+			String content = Utils.applyRegexSubstitutions(action.getContent(), staticSubstitutions);
 			action.setContent(content);
 			action.setContentLength(content.length());
 		}

@@ -18,6 +18,8 @@ public class HTTPAction implements Serializable
 	private String contentType;
 	private String scheme;
 	private String queryString;
+	private boolean hasVariables;
+	private boolean hasSubstitutions;
 	private Map<String, String> headers;
 	public HTTPAction(){}
 	
@@ -34,6 +36,8 @@ public class HTTPAction implements Serializable
 		this.scheme = other.scheme;
 		this.queryString = other.queryString;
 		this.headers = other.headers;
+		this.hasVariables = other.hasVariables;
+		this.hasSubstitutions = other.hasSubstitutions;
 	}
 	
 	public long getTimePassed()
@@ -160,6 +164,26 @@ public class HTTPAction implements Serializable
 			sb.append(queryString);
 		}
 		return sb.toString();
+	}
+
+	public boolean isHasVariables()
+	{
+		return hasVariables;
+	}
+
+	public void setHasVariables(boolean hasVariables)
+	{
+		this.hasVariables = hasVariables;
+	}
+
+	public boolean isHasSubstitutions()
+	{
+		return hasSubstitutions;
+	}
+
+	public void setHasSubstitutions(boolean hasSubstitutions)
+	{
+		this.hasSubstitutions = hasSubstitutions;
 	}
 
 	@Override

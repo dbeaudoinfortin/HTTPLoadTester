@@ -30,11 +30,14 @@ public class Utils
 	public static String applyRegexSubstitutions(String source, Map<Pattern, String> replacements)
 	{
 		for(Entry<Pattern, String> entry : replacements.entrySet())
-		{
-			source = entry.getKey().matcher(source).replaceAll(entry.getValue());
-		}
-
+			source = applyRegexSubstitution(source, entry.getKey(), entry.getValue());
+		
 		return source;
+	}
+	
+	public static String applyRegexSubstitution(String source, Pattern pattern, String replacement)
+	{
+		return pattern.matcher(source).replaceAll(replacement);
 	}
 	
 	public static void discardStream(InputStream in) throws IOException
