@@ -29,9 +29,7 @@ public class RecorderProxyOptions
 		options.addOption("fHttpPort", true, "Proxy forwarding HTTP port.");
 		options.addOption("fHttpsPort", true, "Proxy forwarding HTTPS port.");
 		options.addOption("start", false, "Start recording immediately.");
-		options.addOption("pathSubs", true, "Path Substitutions in Base64 encoded Json format.");
-		options.addOption("querySubs", true, "Query Substitutions in Base64 encoded Json format.");
-		options.addOption("bodySubs", true, "Body Substitutions in Base64 encoded Json format.");
+		options.addOption("fixedSubs", true, "Fixed substitutions in Base64 encoded Json format.");
 		options.addOption("restPort", true, "Port to use for REST API managment interface.");
 		options.addOption("disableREST", false, "Disable the REST API managment interface.");
 		options.addOption("disableJMX", false, "Disable the JMX managment interface.");
