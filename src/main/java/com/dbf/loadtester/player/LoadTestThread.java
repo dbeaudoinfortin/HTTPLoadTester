@@ -15,9 +15,10 @@ import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.impl.client.BasicCookieStore;
 
-import com.dbf.loadtester.common.action.ActionVariable;
 import com.dbf.loadtester.common.action.HTTPAction;
 import com.dbf.loadtester.common.action.converter.ApacheRequestConverter;
+import com.dbf.loadtester.common.action.substitutions.ActionSubstituter;
+import com.dbf.loadtester.common.action.substitutions.ActionVariable;
 import com.dbf.loadtester.common.util.Utils;
 import com.dbf.loadtester.player.action.PlayerHTTPAction;
 import com.dbf.loadtester.player.config.PlayerOptions;
@@ -31,13 +32,8 @@ public class LoadTestThread implements Runnable
 {
 	private static final Logger log = LoggerFactory.getLogger(LoadTestThread.class);
 	
-	private static final String THREAD_ID_PARAM = "<THREAD_ID>";
-	private static final Pattern THREAD_ID_PARAM_PATTERN = Pattern.compile(THREAD_ID_PARAM);
-
-	private Map<Pattern, String> staticSubstitutions;
-	private List<ActionVariable> variableSubstitutions;
-	
 	private final CookieStore cookieStore = new BasicCookieStore();
+	private final ActionSubstituter substituter;
 	
 	private final HttpClient httpClient;	
 	private final int threadNumber;
@@ -161,10 +157,7 @@ public class LoadTestThread implements Runnable
 	private void preActionRun(PlayerHTTPAction action) throws Exception
 	{	
 		//Apply any variables
-		if(action.isHasVariables())
-		{
-			blah, do it;
-		}
+		if(action.isHasVariables()) substituter.applyVariableValues(action);
 			
 		//If the action has not been converted to an HTTP Request, due to variable substitutions, do it now.
 		if(null == action.getHttpRequest()) action.setHttpRequest(requestConverter.convertHTTPActionToApacheRequest(action));
@@ -176,7 +169,7 @@ public class LoadTestThread implements Runnable
 	private void postActionRun(PlayerHTTPAction action, HttpResponse response)
 	{
 		//Extract any variables
-		
+		substituter.
 		//Store any cookies for subsequent calls
 		CookieHandler.storeCookie(cookieStore, action.getCookieOrigin(), response);
 	}
@@ -218,14 +211,7 @@ public class LoadTestThread implements Runnable
 		return response;
 	}
 	
-	private void initSubstitutions()
-	{
-		//These are built-in replacement string
-		//These are calculated ahead of time for better performance
-		//Currently there is only Thread Number, more will be added later
-		staticSubstitutions = new HashMap<Pattern, String>();
-		staticSubstitutions.put(THREAD_ID_PARAM_PATTERN, "" + threadNumber);
-	}
+	
 	
 	/**
 	 * Every thread will have different values for request path, query and body.
@@ -233,9 +219,6 @@ public class LoadTestThread implements Runnable
 	 */
 	private List<PlayerHTTPAction> initializeHTTPActions(List<HTTPAction> actions, int threadNumber)
 	{
-		//Apply substitutions during initialization for better performance
-		if(useSubstitutions) initSubstitutions();
-					
 		//Must do a deep copy because every thread will have different values for request path, query and body
 		List<PlayerHTTPAction> playerHTTPActions = new ArrayList<PlayerHTTPAction>(actions.size());
 		int id = 1;
@@ -245,7 +228,8 @@ public class LoadTestThread implements Runnable
 			playerHTTPActions.add(action);
 			action.setId(id);
 			
-			//Apply substitutions before converting to HTTPMethod
+			//Apply fixed substitutions during initialization for better performance
+			//Apply before converting to HTTPMethod
 			if(useSubstitutions && action.isHasSubstitutions()) applySubstitutions(action);
 			
 			//Handle HTTPs override
@@ -278,22 +262,5 @@ public class LoadTestThread implements Runnable
 			id++;
 		}
 		return playerHTTPActions;
-	}
-	
-	private void applySubstitutions(HTTPAction action)
-	{
-		if(action.getPath() != null)
-			action.setPath(Utils.applyRegexSubstitutions(action.getPath(), staticSubstitutions));
-		
-		if(action.getQueryString() != null)
-			action.setQueryString(Utils.applyRegexSubstitutions(action.getQueryString(), staticSubstitutions));
-		
-		//Body only applies to post and put
-		if(action.getContent() != null && ("PUT".equals(action.getMethod()) || "POST".equals(action.getMethod())))
-		{
-			String content = Utils.applyRegexSubstitutions(action.getContent(), staticSubstitutions);
-			action.setContent(content);
-			action.setContentLength(content.length());
-		}
 	}
 }
