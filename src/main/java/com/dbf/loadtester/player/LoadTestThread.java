@@ -170,7 +170,7 @@ public class LoadTestThread implements Runnable
 	private void postActionRun(PlayerHTTPAction action, HttpResponse response)
 	{
 		//Extract any variables
-		if(useVariableSubstitutions && action.getRetrievalVariables().size() > 0) 
+		if(useVariableSubstitutions && (action.getRetrievalVariables().size() > 0) && (response.getEntity() != null)) 
 		{
 			String responseBody = ((HttpEntityWrapper) response.getEntity()).getResponseBody();
 			substituter.retrieveVariableValues(action, responseBody);
