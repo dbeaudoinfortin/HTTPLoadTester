@@ -7,7 +7,7 @@ import com.dbf.loadtester.common.util.Utils;
 
 public class VariableSubstitution implements Substitution
 {
-	private static final Pattern ANYTHING_PATTERN = Pattern.compile(".*");
+	private static final Pattern ANYTHING_PATTERN = Pattern.compile("(.*)");
 
 	private String variableName;
 	private String retrievalPath;
@@ -44,7 +44,7 @@ public class VariableSubstitution implements Substitution
 		if(path == null || path.equals(""))
 			return ANYTHING_PATTERN;
 		else
-			return Pattern.compile(Pattern.quote(path));
+			return Pattern.compile(ANYTHING_PATTERN + Pattern.quote(path) + ANYTHING_PATTERN);
 	}
 	
 	public boolean retrievalPathMatches(String path)
@@ -117,6 +117,24 @@ public class VariableSubstitution implements Substitution
 	public void setVariableName(String variableName)
 	{
 		this.variableName = variableName;
+	}
+	
+	@Override
+	public String toString()
+	{
+		StringBuilder sb = new StringBuilder();
+		sb.append("{");
+		sb.append(variableName);
+		sb.append(": retrievePath=");
+		sb.append(retrievalPath);
+		sb.append(", replacementPath=");
+		sb.append(replacementPath);
+		sb.append(", retrieveMatch=");
+		sb.append(retrievalTextToMatch);
+		sb.append(", replacementMatch=");
+		sb.append(replacementTextToMatch);
+		sb.append("}");
+		return sb.toString();
 	}
 
 }

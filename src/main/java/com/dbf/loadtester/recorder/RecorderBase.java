@@ -7,15 +7,10 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Random;
 import java.util.Set;
-import java.util.regex.Pattern;
-
 import javax.servlet.ServletRequest;
 import javax.servlet.http.HttpServletRequest;
 
@@ -120,19 +115,31 @@ public class RecorderBase
 			if (sub.getType() == SubstitutionType.path)
 			{
 				if(httpAction.getPath() != null)
-					
-					hasSubs |= httpAction.setPath(sub.applySubstitution(httpAction.getPath()));
+				{
+					String newString = sub.applySubstitution(httpAction.getPath());
+					httpAction.setPath(newString);
+					hasSubs |= !newString.equals(httpAction.getPath());
+				}
 			}
 			else if (sub.getType() == SubstitutionType.query)
 			{
 				if(httpAction.getQueryString() != null)
-					hasSubs |= httpAction.setQueryString(sub.applySubstitution(httpAction.getQueryString()));
+				{
+					String newString = sub.applySubstitution(httpAction.getQueryString());
+					httpAction.setQueryString(newString);
+					hasSubs |= !newString.equals(httpAction.getQueryString());
+				}
 			}
 			else if (sub.getType() == SubstitutionType.body)
 			{
 				//Request Body only applies to PUT and POST 
 				if(httpAction.getContent() != null && ("PUT".equals(httpAction.getMethod()) || "POST".equals(httpAction.getMethod())))
-					hasSubs |= httpAction.setContent(sub.applySubstitution(httpAction.getContent()));
+				{
+					String newString = sub.applySubstitution(httpAction.getContent());
+					httpAction.setContent(newString);
+					hasSubs |=  !newString.equals(httpAction.getContent());
+				}
+					
 			}
 		}
 		return hasSubs;
@@ -263,9 +270,7 @@ public class RecorderBase
 	public void setFixedSubs(List<FixedSubstitution> fixedSubs)
 	{
 		if(fixedSubs != null && !fixedSubs.isEmpty())
-		{
 			fixedSubs.forEach(sub -> sub.init());
-		}
 		
 		//Set only after init
 		this.fixedSubs = fixedSubs;

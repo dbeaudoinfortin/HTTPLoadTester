@@ -11,11 +11,11 @@ import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
-
 import com.dbf.loadtester.common.action.HTTPAction;
+import com.dbf.loadtester.common.action.substitutions.VariableSubstitution;
 import com.dbf.loadtester.common.json.JsonEncoder;
+import com.dbf.loadtester.common.util.Utils;
 import com.dbf.loadtester.player.stats.PlayerStats;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -40,7 +40,7 @@ public class PlayerOptions
 		options.addOption("keepAlive", false, "Keep Load Test Player alive after all threads have halted.");
 		options.addOption("overrideHttps", false, "Override all HTTPs actions with HTTP");
 		options.addOption("applyFixedSubs", false, "Apply fixed substitutions, such as <THREAD_ID>, in the test plan.");
-		options.addOption("applyVariableSubs", false, "Retrieve and subsequently apply variable substitutions in the test plan.");
+		options.addOption("variableSubs", false, "Variable substitutions in Base64 encoded Json format.");
 		options.addOption("restPort", true, "Port to use for REST API managment interface.");
 		options.addOption("disableREST", false, "Disable the REST API managment interface.");
 		options.addOption("disableJMX", false, "Disable the JMX managment interface.");
@@ -54,7 +54,7 @@ public class PlayerOptions
 	private long staggerTime = Constants.DEFAULT_STAGGER_TIME;
 	private int actionDelay = Constants.DEFAULT_TIME_BETWEEN_ACTIONS;
 	private boolean useFixedSubstitutions = false;
-	private boolean useVariableSubstitutions = false;
+	private List<VariableSubstitution> variableSubstitutions;
 	private long minRunTime = Constants.DEFAULT_MINIMUM_RUN_TIME;
 	private int restPort = Constants.DEFAULT_PLAYER_REST_PORT;
 	private File testPlanFile;
@@ -223,6 +223,17 @@ public class PlayerOptions
 		{
 			log.info("Cookie White List disabled. All cookies from the test plan will be ignored.");
 		}
+		
+		if(cmd.hasOption("variableSubs"))
+		{
+			//Use setter, it takes care of the init
+			this.setVariableSubstitutions(Utils.convertArgToObjectList(cmd.getOptionValue("variableSubs")));
+		}
+		
+		if(null != variableSubstitutions && variableSubstitutions.size() > 0)
+			log.info("Using the following Variable substitutions: " + variableSubstitutions);
+		else
+			log.info("Variable substitutions are disabled.");
 	}
 	
 	private void validate() throws IllegalArgumentException, IOException
@@ -430,8 +441,20 @@ public class PlayerOptions
 		this.cookieWhiteList = cookieWhiteList;
 	}
 
-	public boolean isUseVariableSubstitutions()
+	public boolean hasVariableSubstitutions()
 	{
-		return useVariableSubstitutions;
+		return (null != variableSubstitutions) && (variableSubstitutions.size() > 0);
+	}
+
+	public List<VariableSubstitution> getVariableSubstitutions()
+	{
+		return variableSubstitutions;
+	}
+
+	public void setVariableSubstitutions(List<VariableSubstitution> variableSubstitutions)
+	{
+		if(variableSubstitutions != null && !variableSubstitutions.isEmpty())
+			variableSubstitutions.forEach(sub -> sub.init());
+		this.variableSubstitutions = variableSubstitutions;
 	}
 }

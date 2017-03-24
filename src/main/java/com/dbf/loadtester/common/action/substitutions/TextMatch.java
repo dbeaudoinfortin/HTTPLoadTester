@@ -16,7 +16,7 @@ public class TextMatch
 		boolean endIsEmpty = (textMatchEnd == null || textMatchEnd.equals(""));
 		
 		//Must specify a pattern or the start and end, both not both
-    	if(patternIsEmpty ^ (startIsEmpty && endIsEmpty))
+    	if(!(patternIsEmpty ^ (startIsEmpty && endIsEmpty)))
     		throw new IllegalArgumentException("Must specify a Regex pattern or the start & end of the text to match, but not both.");
 	}
 	
@@ -37,7 +37,7 @@ public class TextMatch
 			else if (textMatchEnd == null || textMatchEnd.equals(""))
 				return Pattern.compile(Pattern.quote(textMatchStart));
 			else
-				return Pattern.compile(Pattern.quote(textMatchStart) + "(.*?)" + Pattern.quote(textMatchEnd));
+				return Pattern.compile("(?<=" + Pattern.quote(textMatchStart)  + ")(.*?)(?=" + Pattern.quote(textMatchEnd) + ")");
 		}
 		else
 		{
@@ -73,5 +73,14 @@ public class TextMatch
 	public void setTextPattern(String textPattern)
 	{
 		this.textPattern = textPattern;
+	}
+	
+	@Override
+	public String toString()
+	{
+		if(textPattern != null && !textPattern.equals(""))
+    		return textPattern;
+		
+		return textMatchStart + " to " + textMatchEnd;
 	}
 }

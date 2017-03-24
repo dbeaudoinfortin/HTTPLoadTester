@@ -177,11 +177,28 @@ public class PlayerManagementEndpoint
 	}
 	
 	@GET
-	@Path("/useVariableSubstitutions")
+	@Path("/hasVariableSubstitutions")
 	@Produces({ MediaType.APPLICATION_JSON })
-	public Boolean useVariableSubstitutions()
+	public Boolean hasVariableSubstitutions()
 	{
-		return manager.isUseVariableSubstitutions();
+		return manager.hasVariableSubstitutions();
+	}
+	
+	@GET
+	@Path("/variableSubstitutions")
+	@Produces({ MediaType.APPLICATION_JSON })
+	public String variableSubstitutions()
+	{
+		return manager.getVariableSubstitutions();
+	}
+	
+	@POST
+	@Path("/variableSubstitutions")
+	@Consumes({ MediaType.APPLICATION_JSON })
+	public Response variableSubstitutions(String variableSubstitutions)
+	{
+		manager.setVariableSubstitutions(variableSubstitutions);
+		return Response.ok().build();
 	}
 	
 	@GET

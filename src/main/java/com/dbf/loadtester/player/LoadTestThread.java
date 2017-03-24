@@ -3,11 +3,7 @@ package com.dbf.loadtester.player;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.regex.Pattern;
-
 import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
@@ -59,7 +55,7 @@ public class LoadTestThread implements Runnable
 		this.httpClient = httpClient;
 		this.actionDelay = config.getActionDelay();
 		this.useFixedSubstitutions = config.isUseFixedSubstitutions();
-		this.useVariableSubstitutions = config.isUseVariableSubstitutions();
+		this.useVariableSubstitutions = config.hasVariableSubstitutions();
 		this.minRunTime = config.getMinRunTime();
 		this.host = config.getHost();
 		this.httpPort = config.getHttpPort();

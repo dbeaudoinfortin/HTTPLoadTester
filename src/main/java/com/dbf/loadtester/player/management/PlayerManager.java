@@ -6,9 +6,13 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 
+import com.dbf.loadtester.common.action.substitutions.VariableSubstitution;
+import com.dbf.loadtester.common.json.JsonEncoder;
 import com.dbf.loadtester.player.LoadTestCoordinator;
 import com.dbf.loadtester.player.config.PlayerOptions;
 import com.dbf.loadtester.player.stats.TimeStats;
+import com.google.gson.JsonSyntaxException;
+import com.google.gson.reflect.TypeToken;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -181,12 +185,6 @@ public class PlayerManager implements PlayerManagerMBean
 		if(isRunning()) throw new RuntimeException("Can't modify configuration while running.");
 		config.setUseFixedSubstitutions(useFixedSubstitutions);;	
 	}
-	
-	@Override
-	public boolean isUseVariableSubstitutions()
-	{
-		return config.isUseVariableSubstitutions();
-	}
 
 	@Override
 	public boolean isOverrideHttps()
@@ -243,6 +241,38 @@ public class PlayerManager implements PlayerManagerMBean
 	{
 		if(isRunning()) throw new RuntimeException("Can't modify configuration while running.");
 		config.setCookieWhiteList(new HashSet<String>(cookieWhiteList));
+	}
+	
+	@Override
+	public boolean hasVariableSubstitutions()
+	{
+		return config.hasVariableSubstitutions();
+	}
+
+	@Override
+	public String getVariableSubstitutions()
+	{
+		return JsonEncoder.toJson(config.getVariableSubstitutions());
+	}
+
+	@Override
+	public void setVariableSubstitutions(String json)
+	{
+		if(isRunning()) throw new RuntimeException("Can't modify configuration while running.");
+		
+		try
+		{
+			List<VariableSubstitution> newSubs = JsonEncoder.fromJson(json, (new TypeToken<List<VariableSubstitution>>(){}).getType());
+    		if(null != newSubs) config.setVariableSubstitutions(newSubs);;
+    	}
+    	catch(JsonSyntaxException e)
+    	{
+    		log.warn("Cannot set variable substitutions. JSON conversion failed for '" + json + "'.", e);
+    	}
+		catch(Exception e)
+    	{
+    		log.warn("Cannot set variable substitutions for '" + json + "'.", e);
+    	}
 	}
 	
 	@Override

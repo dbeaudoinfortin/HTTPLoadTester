@@ -107,11 +107,11 @@ public class RecorderManager implements RecorderManagerMBean
     	}
     	catch(JsonSyntaxException e)
     	{
-    		log.warn("Cannot set fixed substitutions. JSON conversion failed for '" + json + "'.");
+    		log.warn("Cannot set fixed substitutions. JSON conversion failed for '" + json + "'.", e);
     	}
 		catch(Exception e)
     	{
-    		log.warn("Cannot set fixed substitutions for '" + json + "'.");
+    		log.warn("Cannot set fixed substitutions for '" + json + "'.", e);
     	}
 	}
 

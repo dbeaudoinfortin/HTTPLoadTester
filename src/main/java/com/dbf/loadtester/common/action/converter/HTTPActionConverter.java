@@ -31,7 +31,6 @@ public class HTTPActionConverter extends HTTPConverter
 		httpAction.setScheme(httpRequest.getScheme());
 		httpAction.setPath(httpRequest.getPathInfo());
 		httpAction.setContent(new String(httpRequest.getRequestBody()));
-		httpAction.setContentLength(httpRequest.getContentLength());
 		return httpAction;
 	}
 }

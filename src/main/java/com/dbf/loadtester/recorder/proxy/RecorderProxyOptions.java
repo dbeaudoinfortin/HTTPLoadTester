@@ -8,13 +8,9 @@ import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
-import org.apache.commons.codec.binary.Base64;
-
 import com.dbf.loadtester.common.action.substitutions.FixedSubstitution;
-import com.dbf.loadtester.common.json.JsonEncoder;
+import com.dbf.loadtester.common.util.Utils;
 import com.dbf.loadtester.player.config.Constants;
-import com.google.gson.JsonSyntaxException;
-import com.google.gson.reflect.TypeToken;
 
 public class RecorderProxyOptions
 {
@@ -145,27 +141,13 @@ public class RecorderProxyOptions
 		{
 			try
 			{
-				setFixedSubs(convertArgToSubList(cmd.getOptionValue("fixedSubs")));
+				fixedSubs = Utils.convertArgToObjectList(cmd.getOptionValue("fixedSubs"));
 			}
 			catch (Exception e)
 	    	{
 				throw new IllegalArgumentException("Failed to convert Base64-encoded 'fixedSubs': " + e.getMessage(), e); 
 	    	}
 		}	
-	}
-	
-	private static List<FixedSubstitution> convertArgToSubList(String arg)
-	{
-		String base64Decoded = new String(Base64.decodeBase64(arg));
-		try
-		{
-			
-			return JsonEncoder.fromJson(base64Decoded, (new TypeToken<List<FixedSubstitution>>(){}).getType());
-		}
-		catch (JsonSyntaxException e)
-		{
-			throw new IllegalArgumentException("Failed to parse Json value '" + base64Decoded + "'.",e);
-		}
 	}
 		
 	public static void printOptions()
