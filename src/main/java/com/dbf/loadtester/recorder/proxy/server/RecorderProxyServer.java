@@ -80,9 +80,7 @@ public class RecorderProxyServer
 		filter.setInstanceFactory(new RecorderServletFilterFactory((new RecorderServletFilterOptions())
 				.withImmediateStart(options.isImmediateStart())
 				.withTestPlanDirectory(options.getDirectory())
-				.withPathSubs(options.getPathSubs())
-				.withQuerySubs(options.getQuerySubs())
-				.withBodySubs(options.getBodySubs())
+				.withFixedSubs(options.getFixedSubs())
 				.withEnableJMX(!options.isDisableJMX())
 				.withEnableREST(!options.isDisableREST())
 				.withRestPort(options.getRestPort())));

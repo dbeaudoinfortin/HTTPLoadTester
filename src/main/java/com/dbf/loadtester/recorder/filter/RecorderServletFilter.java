@@ -49,34 +49,26 @@ public class RecorderServletFilter extends RecorderBase implements Filter
 
 	public void init(FilterConfig filterConfig) throws ServletException 
 	{
-		String testPlanDirectory = useParams ? filterConfig.getInitParameter(PARAM_DIRECTORY_PATH) : options.getTestPlanDirectory();
-		if(null != testPlanDirectory && !testPlanDirectory.isEmpty()) setTestPlanDirectory(Paths.get(testPlanDirectory));
-		log.info("Initializing HTTP Load Test Recorder Filter using test plan directory " + this.getTestPlanDirectory());
-		
-		//Set the substitutions, not possible using init params
-		if(!useParams)
+		try
 		{
-			if(null != options.getPathSubs()) 
-			{
-				this.setPathSubs(options.getPathSubs());
-				log.info("Using path-based substitutions: " + options.getPathSubs().toString());
+			String testPlanDirectory = useParams ? filterConfig.getInitParameter(PARAM_DIRECTORY_PATH) : options.getTestPlanDirectory();
+			if(null != testPlanDirectory && !testPlanDirectory.isEmpty()) setTestPlanDirectory(Paths.get(testPlanDirectory));
+			log.info("Initializing HTTP Load Test Recorder Filter using test plan directory " + this.getTestPlanDirectory());
+			
+			//Set the fixed substitutions. This is not possible using init params.
+			if(!useParams && null != options.getFixedSubs())
+			{		
+				this.setFixedSubs(options.getFixedSubs());
+				log.info("Using fixed substitutions: " + options.getFixedSubs().toString());
 			}
-				
-			if(null != options.getQuerySubs())
-			{
-				this.setQuerySubs(options.getQuerySubs());
-				log.info("Using query-based substitutions: " + options.getQuerySubs().toString());
-			}
-				
-			if(null != options.getBodySubs())
-			{
-				this.setBodySubs(options.getBodySubs());
-				log.info("Using body-based substitutions: " + options.getBodySubs().toString());
-			}
+			
+			//Register management once the options are set but before starting the recording
+			initManagement();		
 		}
-		
-		//Register management once the options are set but before starting the recording
-		initManagement();
+		catch(Exception e)
+		{
+			throw new ServletException("Failed to initialize the filter.",e);
+		}
 		
 		log.info("HTTP Load Test Recorder Filter initialization complete.");
 		

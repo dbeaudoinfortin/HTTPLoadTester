@@ -2,6 +2,7 @@ package com.dbf.loadtester.player.management;
 
 import java.util.List;
 import java.util.Map;
+
 import com.dbf.loadtester.player.stats.TimeStats;
 
 //Interface specifically named for JMX
@@ -47,9 +48,9 @@ public interface PlayerManagerMBean
 
 	public void setActionDelay(int actionDelay);
 	
-	public boolean isUseSubstitutions();
+	public boolean isUseFixedSubstitutions();
 
-	public void setUseSubstitutions(boolean useSubstitutions);
+	public void setUseFixedSubstitutions(boolean useSubstitutions);
 	
 	public boolean isOverrideHttps();
 
@@ -68,4 +69,10 @@ public interface PlayerManagerMBean
 	public List<String> getCookieWhiteList();
 
 	public void setCookieWhiteList(List<String> cookieWhiteList);
+	
+	public boolean hasVariableSubstitutions();
+
+	public String getVariableSubstitutions();
+
+	public void setVariableSubstitutions(String variableSubstitutions);
 }

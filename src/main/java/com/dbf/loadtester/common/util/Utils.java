@@ -2,13 +2,19 @@ package com.dbf.loadtester.common.util;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.regex.Pattern;
 
+import org.apache.commons.codec.binary.Base64;
 import org.apache.http.Header;
 import org.slf4j.ILoggerFactory;
 import org.slf4j.LoggerFactory;
+
+import com.dbf.loadtester.common.json.JsonEncoder;
+import com.google.gson.JsonSyntaxException;
+import com.google.gson.reflect.TypeToken;
 
 import ch.qos.logback.classic.LoggerContext;
 
@@ -30,11 +36,14 @@ public class Utils
 	public static String applyRegexSubstitutions(String source, Map<Pattern, String> replacements)
 	{
 		for(Entry<Pattern, String> entry : replacements.entrySet())
-		{
-			source = entry.getKey().matcher(source).replaceAll(entry.getValue());
-		}
-
+			source = applyRegexSubstitution(source, entry.getKey(), entry.getValue());
+		
 		return source;
+	}
+	
+	public static String applyRegexSubstitution(String source, Pattern pattern, String replacement)
+	{
+		return pattern.matcher(source).replaceAll(replacement);
 	}
 	
 	public static void discardStream(InputStream in) throws IOException
@@ -72,4 +81,16 @@ public class Utils
 		return contentType.trim().toLowerCase();
 	}
 	
+	public static <T> List<T> convertArgToObjectList(String arg)
+	{
+		String base64Decoded = new String(Base64.decodeBase64(arg));
+		try
+		{
+			return JsonEncoder.fromJson(base64Decoded, (new TypeToken<List<T>>(){}).getType());
+		}
+		catch (JsonSyntaxException e)
+		{
+			throw new IllegalArgumentException("Failed to parse Json value '" + base64Decoded + "'.",e);
+		}
+	}
 }

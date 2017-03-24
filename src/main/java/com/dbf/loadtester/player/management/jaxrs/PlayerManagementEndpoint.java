@@ -160,19 +160,44 @@ public class PlayerManagementEndpoint
 	}
 	
 	@GET
-	@Path("/useSubstitutions")
+	@Path("/useFixedSubstitutions")
 	@Produces({ MediaType.APPLICATION_JSON })
-	public Boolean useSubstitutions()
+	public Boolean useFixedSubstitutions()
 	{
-		return manager.isUseSubstitutions();
+		return manager.isUseFixedSubstitutions();
 	}
 	
 	@POST
-	@Path("/useSubstitutions")
+	@Path("/useFixedSubstitutions")
 	@Consumes({ MediaType.APPLICATION_JSON })
-	public Response useSubstitutions(Boolean useSubstitutions)
+	public Response useFixedSubstitutions(Boolean useFixedSubstitutions)
 	{
-		manager.setUseSubstitutions(useSubstitutions);
+		manager.setUseFixedSubstitutions(useFixedSubstitutions);
+		return Response.ok().build();
+	}
+	
+	@GET
+	@Path("/hasVariableSubstitutions")
+	@Produces({ MediaType.APPLICATION_JSON })
+	public Boolean hasVariableSubstitutions()
+	{
+		return manager.hasVariableSubstitutions();
+	}
+	
+	@GET
+	@Path("/variableSubstitutions")
+	@Produces({ MediaType.APPLICATION_JSON })
+	public String variableSubstitutions()
+	{
+		return manager.getVariableSubstitutions();
+	}
+	
+	@POST
+	@Path("/variableSubstitutions")
+	@Consumes({ MediaType.APPLICATION_JSON })
+	public Response variableSubstitutions(String variableSubstitutions)
+	{
+		manager.setVariableSubstitutions(variableSubstitutions);
 		return Response.ok().build();
 	}
 	

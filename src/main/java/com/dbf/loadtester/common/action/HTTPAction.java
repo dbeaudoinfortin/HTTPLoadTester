@@ -14,10 +14,10 @@ public class HTTPAction implements Serializable
 	private String method;
 	private String characterEncoding;
 	private String content; 
-	private int contentLength;
 	private String contentType;
 	private String scheme;
 	private String queryString;
+	private boolean hasSubstitutions;
 	private Map<String, String> headers;
 	public HTTPAction(){}
 	
@@ -29,11 +29,11 @@ public class HTTPAction implements Serializable
 		this.method = other.method;
 		this.characterEncoding = other.characterEncoding;
 		this.content = other.content; 
-		this.contentLength = other.contentLength;
 		this.contentType = other.contentType;
 		this.scheme = other.scheme;
 		this.queryString = other.queryString;
 		this.headers = other.headers;
+		this.hasSubstitutions = other.hasSubstitutions;
 	}
 	
 	public long getTimePassed()
@@ -84,16 +84,6 @@ public class HTTPAction implements Serializable
 	public void setContent(String content)
 	{
 		this.content = content;
-	}
-	
-	public int getContentLength()
-	{
-		return contentLength;
-	}
-	
-	public void setContentLength(int contentLength)
-	{
-		this.contentLength = contentLength;
 	}
 	
 	public String getContentType()
@@ -160,6 +150,16 @@ public class HTTPAction implements Serializable
 			sb.append(queryString);
 		}
 		return sb.toString();
+	}
+	
+	public boolean isHasSubstitutions()
+	{
+		return hasSubstitutions;
+	}
+
+	public void setHasSubstitutions(boolean hasSubstitutions)
+	{
+		this.hasSubstitutions = hasSubstitutions;
 	}
 
 	@Override

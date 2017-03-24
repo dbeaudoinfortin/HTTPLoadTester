@@ -2,19 +2,15 @@ package com.dbf.loadtester.recorder.proxy;
 
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.HashMap;
-import java.util.Map;
-
+import java.util.List;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
-import org.apache.commons.codec.binary.Base64;
-
-import com.dbf.loadtester.common.json.JsonEncoder;
+import com.dbf.loadtester.common.action.substitutions.FixedSubstitution;
+import com.dbf.loadtester.common.util.Utils;
 import com.dbf.loadtester.player.config.Constants;
-import com.google.gson.JsonSyntaxException;
 
 public class RecorderProxyOptions
 {
@@ -29,9 +25,7 @@ public class RecorderProxyOptions
 		options.addOption("fHttpPort", true, "Proxy forwarding HTTP port.");
 		options.addOption("fHttpsPort", true, "Proxy forwarding HTTPS port.");
 		options.addOption("start", false, "Start recording immediately.");
-		options.addOption("pathSubs", true, "Path Substitutions in Base64 encoded Json format.");
-		options.addOption("querySubs", true, "Query Substitutions in Base64 encoded Json format.");
-		options.addOption("bodySubs", true, "Body Substitutions in Base64 encoded Json format.");
+		options.addOption("fixedSubs", true, "Fixed substitutions in Base64 encoded Json format.");
 		options.addOption("restPort", true, "Port to use for REST API managment interface.");
 		options.addOption("disableREST", false, "Disable the REST API managment interface.");
 		options.addOption("disableJMX", false, "Disable the JMX managment interface.");
@@ -52,9 +46,7 @@ public class RecorderProxyOptions
 	private boolean overrideHostHeader = true;
 	private boolean rewriteUrls = false;
 	
-	private Map<String, String> pathSubs;
-	private Map<String, String> querySubs;
-	private Map<String, String> bodySubs;
+	private List<FixedSubstitution> fixedSubs;
 	
 	public RecorderProxyOptions(String[] args) throws IllegalArgumentException
 	{
@@ -145,56 +137,17 @@ public class RecorderProxyOptions
 		if(forwardHTTPSPort < 0) throw new IllegalArgumentException("Invalid proxy forwarding https port number."); 
 		
 		
-		if(cmd.hasOption("pathSubs"))
+		if(cmd.hasOption("fixedSubs"))
 		{
 			try
 			{
-				pathSubs = convertArgToMap(cmd.getOptionValue("pathSubs"));
+				fixedSubs = Utils.convertArgToObjectList(cmd.getOptionValue("fixedSubs"));
 			}
 			catch (Exception e)
 	    	{
-				throw new IllegalArgumentException("Failed to convert Base64-encoded 'pathSubs' arg to Map: " + e.getMessage(), e); 
+				throw new IllegalArgumentException("Failed to convert Base64-encoded 'fixedSubs': " + e.getMessage(), e); 
 	    	}
-		}
-		
-		if(cmd.hasOption("querySubs"))
-		{
-			try
-			{
-				querySubs = convertArgToMap(cmd.getOptionValue("querySubs"));
-			}
-			catch (Exception e)
-	    	{
-				throw new IllegalArgumentException("Failed to convert Base64-encoded 'querySubs' arg to Map: " + e.getMessage(), e); 
-	    	}
-		}
-		
-		if(cmd.hasOption("bodySubs"))
-		{
-			try
-			{
-				bodySubs = convertArgToMap(cmd.getOptionValue("bodySubs"));
-			}
-			catch (Exception e)
-	    	{
-				throw new IllegalArgumentException("Failed to convert Base64-encoded 'querySubs' arg to Map: " + e.getMessage(), e); 
-	    	}
-		}
-			
-	}
-	
-	@SuppressWarnings("unchecked")
-	private static Map<String, String> convertArgToMap(String arg)
-	{
-		String base64Decoded = new String(Base64.decodeBase64(arg));
-		try
-		{
-			return JsonEncoder.fromJson(base64Decoded, HashMap.class);
-		}
-		catch (JsonSyntaxException e)
-		{
-			throw new IllegalArgumentException("Failed to parse Json value '" + base64Decoded + "'.",e);
-		}
+		}	
 	}
 		
 	public static void printOptions()
@@ -238,36 +191,6 @@ public class RecorderProxyOptions
 		return immediateStart;
 	}
 
-	public Map<String, String> getPathSubs()
-	{
-		return pathSubs;
-	}
-
-	public void setPathSubs(Map<String, String> pathSubs)
-	{
-		this.pathSubs = pathSubs;
-	}
-
-	public Map<String, String> getQuerySubs()
-	{
-		return querySubs;
-	}
-
-	public void setQuerySubs(Map<String, String> querySubs)
-	{
-		this.querySubs = querySubs;
-	}
-
-	public Map<String, String> getBodySubs()
-	{
-		return bodySubs;
-	}
-
-	public void setBodySubs(Map<String, String> bodySubs)
-	{
-		this.bodySubs = bodySubs;
-	}
-
 	public Integer getRestPort()
 	{
 		return restPort;
@@ -301,5 +224,15 @@ public class RecorderProxyOptions
 	public void setRewriteUrls(boolean rewriteUrls)
 	{
 		this.rewriteUrls = rewriteUrls;
+	}
+
+	public List<FixedSubstitution> getFixedSubs()
+	{
+		return fixedSubs;
+	}
+
+	public void setFixedSubs(List<FixedSubstitution> fixedSubs)
+	{
+		this.fixedSubs = fixedSubs;
 	}
 }

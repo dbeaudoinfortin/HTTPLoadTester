@@ -7,6 +7,7 @@ import org.apache.http.cookie.Cookie;
 import org.apache.http.cookie.CookieOrigin;
 
 import com.dbf.loadtester.common.action.HTTPAction;
+import com.dbf.loadtester.common.action.substitutions.VariableSubstitution;
 
 /**
  * Adds several runtime calculated fields to HTTPAction.
@@ -23,6 +24,9 @@ public class PlayerHTTPAction extends HTTPAction
 	private transient CookieOrigin cookieOrigin;
 	private transient List<Cookie> whiteListCookies;
 	private transient String identifier;
+	private transient long lastRunDuration = -1;
+	private transient List<VariableSubstitution> replacementVariables;
+	private transient List<VariableSubstitution> retrievalVariables;
 	
 	public PlayerHTTPAction(HTTPAction other)
 	{
@@ -78,6 +82,36 @@ public class PlayerHTTPAction extends HTTPAction
 	public String getIdentifier()
 	{
 		return identifier;
+	}
+
+	public long getLastRunDuration()
+	{
+		return lastRunDuration;
+	}
+
+	public void setLastRunDuration(long lastRunDuration)
+	{
+		this.lastRunDuration = lastRunDuration;
+	}
+
+	public List<VariableSubstitution> getReplacementVariables()
+	{
+		return replacementVariables;
+	}
+
+	public void setReplacementVariables(List<VariableSubstitution> replacementVariables)
+	{
+		this.replacementVariables = replacementVariables;
+	}
+
+	public List<VariableSubstitution> getRetrievalVariables()
+	{
+		return retrievalVariables;
+	}
+
+	public void setRetrievalVariables(List<VariableSubstitution> retrievalVariables)
+	{
+		this.retrievalVariables = retrievalVariables;
 	}
 
 	@Override

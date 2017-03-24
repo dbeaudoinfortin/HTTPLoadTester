@@ -8,6 +8,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
+import java.lang.reflect.Type;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -63,6 +64,11 @@ public class JsonEncoder
 	public static <T> T fromJson(String json, Class<T> classOfT) throws JsonSyntaxException
 	{
 		return gson.fromJson(json, classOfT);
+	}
+	
+	public static <T> T fromJson(String json, Type typeOfT) 
+	{
+		return gson.fromJson(json, typeOfT);
 	}
 	
 	public static void toJson(Object entity, Class<?> type, OutputStream entityStream) throws IOException 
