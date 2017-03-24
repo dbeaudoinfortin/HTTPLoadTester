@@ -39,7 +39,8 @@ public class PlayerOptions
 		options.addOption("pause", false, "Pause and wait for JMX/REST invocation to start.");
 		options.addOption("keepAlive", false, "Keep Load Test Player alive after all threads have halted.");
 		options.addOption("overrideHttps", false, "Override all HTTPs actions with HTTP");
-		options.addOption("applySubs", false, "Apply variable substitutions, such as <THREAD_ID>, in the test plan.");
+		options.addOption("applyFixedSubs", false, "Apply fixed substitutions, such as <THREAD_ID>, in the test plan.");
+		options.addOption("applyVariableSubs", false, "Retrieve and subsequently apply variable substitutions in the test plan.");
 		options.addOption("restPort", true, "Port to use for REST API managment interface.");
 		options.addOption("disableREST", false, "Disable the REST API managment interface.");
 		options.addOption("disableJMX", false, "Disable the JMX managment interface.");
@@ -52,7 +53,8 @@ public class PlayerOptions
 	private int threadCount = Constants.DEFAULT_THREAD_COUNT;
 	private long staggerTime = Constants.DEFAULT_STAGGER_TIME;
 	private int actionDelay = Constants.DEFAULT_TIME_BETWEEN_ACTIONS;
-	private boolean useSubstitutions = false;
+	private boolean useFixedSubstitutions = false;
+	private boolean useVariableSubstitutions = false;
 	private long minRunTime = Constants.DEFAULT_MINIMUM_RUN_TIME;
 	private int restPort = Constants.DEFAULT_PLAYER_REST_PORT;
 	private File testPlanFile;
@@ -109,10 +111,10 @@ public class PlayerOptions
 			log.info("HTTPS override enabled.");
 		}
 		
-		if(cmd.hasOption("applySubs"))
+		if(cmd.hasOption("applyFixedSubs"))
 		{
-			useSubstitutions = true;
-			log.info("Substitutions will be applied to the Test Plan.");
+			useFixedSubstitutions = true;
+			log.info("Fixed substitutions will be applied to the Test Plan.");
 		}
 		
 		if(cmd.hasOption("shareConnections"))
@@ -358,14 +360,14 @@ public class PlayerOptions
 		this.actionDelay = actionDelay;
 	}
 
-	public boolean isUseSubstitutions()
+	public boolean isUseFixedSubstitutions()
 	{
-		return useSubstitutions;
+		return useFixedSubstitutions;
 }
 
-	public void setUseSubstitutions(boolean useSubstitutions)
+	public void setUseFixedSubstitutions(boolean useFixedSubstitutions)
 	{
-		this.useSubstitutions = useSubstitutions;
+		this.useFixedSubstitutions = useFixedSubstitutions;
 	}
 
 	public boolean isOverrideHttps()
@@ -426,5 +428,10 @@ public class PlayerOptions
 	public void setCookieWhiteList(Collection<String> cookieWhiteList)
 	{
 		this.cookieWhiteList = cookieWhiteList;
+	}
+
+	public boolean isUseVariableSubstitutions()
+	{
+		return useVariableSubstitutions;
 	}
 }

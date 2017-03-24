@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
 
+import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.CookieStore;
@@ -18,8 +19,9 @@ import org.apache.http.impl.client.BasicCookieStore;
 import com.dbf.loadtester.common.action.HTTPAction;
 import com.dbf.loadtester.common.action.converter.ApacheRequestConverter;
 import com.dbf.loadtester.common.action.substitutions.ActionSubstituter;
-import com.dbf.loadtester.common.action.substitutions.ActionVariable;
+import com.dbf.loadtester.common.action.substitutions.VariableSubstitution;
 import com.dbf.loadtester.common.util.Utils;
+import com.dbf.loadtester.player.action.HttpEntityWrapper;
 import com.dbf.loadtester.player.action.PlayerHTTPAction;
 import com.dbf.loadtester.player.config.PlayerOptions;
 import com.dbf.loadtester.player.cookie.CookieHandler;
@@ -38,7 +40,8 @@ public class LoadTestThread implements Runnable
 	private final HttpClient httpClient;	
 	private final int threadNumber;
 	private final int actionDelay;
-	private final boolean useSubstitutions;
+	private final boolean useFixedSubstitutions;
+	private final boolean useVariableSubstitutions;
 	private final long minRunTime;
 	private final String host;
 	private final int httpPort;
@@ -55,7 +58,8 @@ public class LoadTestThread implements Runnable
 		this.threadNumber = threadNumber;
 		this.httpClient = httpClient;
 		this.actionDelay = config.getActionDelay();
-		this.useSubstitutions = config.isUseSubstitutions();
+		this.useFixedSubstitutions = config.isUseFixedSubstitutions();
+		this.useVariableSubstitutions = config.isUseVariableSubstitutions();
 		this.minRunTime = config.getMinRunTime();
 		this.host = config.getHost();
 		this.httpPort = config.getHttpPort();
@@ -65,6 +69,7 @@ public class LoadTestThread implements Runnable
 		this.master = master;
 		this.requestConverter = requestConverter;
 		this.cookieWhiteList = config.getCookieWhiteList();
+		this.substituter = new ActionSubstituter(threadNumber, config.getVariableSubstitutions());
 		
 		//Initialize Actions last!
 		this.actions = initializeHTTPActions(config.getActions(), threadNumber);
@@ -157,7 +162,7 @@ public class LoadTestThread implements Runnable
 	private void preActionRun(PlayerHTTPAction action) throws Exception
 	{	
 		//Apply any variables
-		if(action.isHasVariables()) substituter.applyVariableValues(action);
+		if(useVariableSubstitutions) substituter.applyVariableValues(action);
 			
 		//If the action has not been converted to an HTTP Request, due to variable substitutions, do it now.
 		if(null == action.getHttpRequest()) action.setHttpRequest(requestConverter.convertHTTPActionToApacheRequest(action));
@@ -169,7 +174,12 @@ public class LoadTestThread implements Runnable
 	private void postActionRun(PlayerHTTPAction action, HttpResponse response)
 	{
 		//Extract any variables
-		substituter.
+		if(useVariableSubstitutions && action.getRetrievalVariables().size() > 0) 
+		{
+			String responseBody = ((HttpEntityWrapper) response.getEntity()).getResponseBody();
+			substituter.retrieveVariableValues(action, responseBody);
+		}
+		
 		//Store any cookies for subsequent calls
 		CookieHandler.storeCookie(cookieStore, action.getCookieOrigin(), response);
 	}
@@ -191,7 +201,22 @@ public class LoadTestThread implements Runnable
     		//Consume the response body fully so that the connection can be reused.
     		//Reading the body is part of the overall action execution time.
     		HttpEntity entity = response.getEntity();
-    		if(null != entity) Utils.discardStream(entity.getContent());
+    		
+    		if(null != entity)
+    		{
+	    		//For variable substitutions, we will need to read the response body
+	    		//Otherwise, discard it
+	    		if(useVariableSubstitutions && action.getRetrievalVariables().size() > 0)
+	    		{
+	    			HttpEntityWrapper wrapper = new HttpEntityWrapper(entity);
+	    			response.setEntity(wrapper);
+	    			wrapper.setResponseBody(IOUtils.toString(entity.getContent()));
+	    		}
+	    		else
+	    		{
+	    			Utils.discardStream(entity.getContent());
+	    		}
+    		}
 
     		endTime = System.currentTimeMillis();
 		}
@@ -211,8 +236,6 @@ public class LoadTestThread implements Runnable
 		return response;
 	}
 	
-	
-	
 	/**
 	 * Every thread will have different values for request path, query and body.
 	 * So, we have to initialize the Actions in a thread-specific way.
@@ -230,7 +253,9 @@ public class LoadTestThread implements Runnable
 			
 			//Apply fixed substitutions during initialization for better performance
 			//Apply before converting to HTTPMethod
-			if(useSubstitutions && action.isHasSubstitutions()) applySubstitutions(action);
+			//Also do this before matching the path for variable substitutions
+			if(useFixedSubstitutions && action.isHasSubstitutions())
+				substituter.applyFixedSubstitutions(action);
 			
 			//Handle HTTPs override
 			if(overrideHttps) action.setScheme("http");
@@ -239,9 +264,21 @@ public class LoadTestThread implements Runnable
 			boolean isSecure = action.getScheme().equalsIgnoreCase("https");
 			action.setCookieOrigin(CookieHandler.determineCookieOrigin(host, (isSecure ? httpsPort : httpPort), action.getPath(), isSecure));
 			
+			boolean actionHasVariables = false;
+			if(useVariableSubstitutions)
+			{
+				//Applying multiple regex expressions to every request would be expensive
+				//So, we pre-compute which actions use what variables
+				List<VariableSubstitution> retrievalVariables = substituter.retrievalVariablesForAction(action);
+				List<VariableSubstitution> replacementVariables = substituter.replacementVariablesForAction(action);
+				action.setRetrievalVariables(retrievalVariables);
+				action.setReplacementVariables(replacementVariables);
+				actionHasVariables = !(retrievalVariables.isEmpty() && replacementVariables.isEmpty());
+			}
+			
 			//We re-use Apache HTTP Client Requests for better performance, so pre-generate it.
 			//But, we can only pre-generate it if there are no variables in the action.
-			if(!action.isHasVariables())
+			if(!actionHasVariables)
 			{
 				try
 				{

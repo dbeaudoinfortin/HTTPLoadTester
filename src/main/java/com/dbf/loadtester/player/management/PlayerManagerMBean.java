@@ -47,9 +47,11 @@ public interface PlayerManagerMBean
 
 	public void setActionDelay(int actionDelay);
 	
-	public boolean isUseSubstitutions();
+	public boolean isUseFixedSubstitutions();
+	
+	public boolean isUseVariableSubstitutions();
 
-	public void setUseSubstitutions(boolean useSubstitutions);
+	public void setUseFixedSubstitutions(boolean useSubstitutions);
 	
 	public boolean isOverrideHttps();
 

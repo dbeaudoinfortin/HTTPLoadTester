@@ -3,14 +3,15 @@ package com.dbf.loadtester.recorder.management;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 
+import com.dbf.loadtester.common.action.substitutions.FixedSubstitution;
 import com.dbf.loadtester.common.json.JsonEncoder;
 import com.dbf.loadtester.player.LoadTestCoordinator;
 import com.dbf.loadtester.recorder.filter.RecorderServletFilter;
 import com.google.gson.JsonSyntaxException;
+import com.google.gson.reflect.TypeToken;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -97,65 +98,26 @@ public class RecorderManager implements RecorderManagerMBean
 	}
 
 	@Override
-	public void setPathSubstitutions(String map)
+	public void setFixedSubstitutions(String json)
 	{
 		try
 		{
-			@SuppressWarnings("unchecked")
-    		Map<String,String> newMap = JsonEncoder.fromJson(map, HashMap.class);
-    		if(null != newMap) recorderServletFilter.setPathSubs(newMap);
+			List<FixedSubstitution> newSubs = JsonEncoder.fromJson(json, (new TypeToken<List<FixedSubstitution>>(){}).getType());
+    		if(null != newSubs) recorderServletFilter.setFixedSubs(newSubs);
     	}
     	catch(JsonSyntaxException e)
     	{
-    		log.warn("Cannot set path-based substitutions. JSON conversion failed for '" + map + "'.");
+    		log.warn("Cannot set fixed substitutions. JSON conversion failed for '" + json + "'.");
+    	}
+		catch(Exception e)
+    	{
+    		log.warn("Cannot set fixed substitutions for '" + json + "'.");
     	}
 	}
 
 	@Override
-	public String getPathSubstitutions()
+	public String getFixedSubstitutions()
 	{
-		return JsonEncoder.toJson(recorderServletFilter.getPathSubs());
-	}
-	
-	@Override
-	public void setQuerySubstitutions(String map)
-	{
-		try
-		{
-			@SuppressWarnings("unchecked")
-    		Map<String,String> newMap = JsonEncoder.fromJson(map, HashMap.class);
-    		if(null != newMap) recorderServletFilter.setQuerySubs(newMap);
-    	}
-    	catch(JsonSyntaxException e)
-    	{
-    		log.warn("Cannot set query-based substitutions. JSON conversion failed for '" + map + "'.");
-    	}
-	}
-
-	@Override
-	public String getQuerySubstitutions()
-	{
-		return JsonEncoder.toJson(recorderServletFilter.getQuerySubs());
-	}
-	
-	@Override
-	public void setBodySubstitutions(String map)
-	{
-		try
-		{
-			@SuppressWarnings("unchecked")
-    		Map<String,String> newMap = JsonEncoder.fromJson(map, HashMap.class);
-    		if(null != newMap) recorderServletFilter.setBodySubs(newMap);
-    	}
-    	catch(JsonSyntaxException e)
-    	{
-    		log.warn("Cannot set body-based substitutions. JSON conversion failed for '" + map + "'.");
-    	}
-	}
-
-	@Override
-	public String getBodySubstitutions()
-	{
-		return JsonEncoder.toJson(recorderServletFilter.getBodySubs());
+		return JsonEncoder.toJson(recorderServletFilter.getFixedSubs());
 	}
 }

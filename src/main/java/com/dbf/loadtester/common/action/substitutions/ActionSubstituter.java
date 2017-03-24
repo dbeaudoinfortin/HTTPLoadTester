@@ -1,5 +1,6 @@
 package com.dbf.loadtester.common.action.substitutions;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -18,8 +19,7 @@ import com.dbf.loadtester.player.action.PlayerHTTPAction;
  */
 public class ActionSubstituter
 {
-	private static final String THREAD_ID_PARAM = "<THREAD_ID>";
-	private static final Pattern THREAD_ID_PARAM_PATTERN = Pattern.compile(THREAD_ID_PARAM);
+	private static final Pattern THREAD_ID_PARAM_PATTERN = Pattern.compile("<THREAD_ID>");
 
 	//Fixed Substitutions are built-in replacement strings. These do not change during the test plan.
 	//These are calculated ahead of time for better performance.
@@ -28,12 +28,12 @@ public class ActionSubstituter
 	
 	//Variable Substitutions are values that change during test plan execution. These must be extracted
 	//from a response and re-inserted into subsequent requests.
-	private List<ActionVariable> variableSubstitutions;
+	private List<VariableSubstitution> variableSubstitutions;
 	
 	//Holds the retrieved variable values
 	private final Map<String, String> variableValues = new HashMap<String, String>();
 	
-	public ActionSubstituter(int uniqueThreadNumber, List<ActionVariable> variableSubstitutions)
+	public ActionSubstituter(int uniqueThreadNumber, List<VariableSubstitution> variableSubstitutions)
 	{
 		this.variableSubstitutions = variableSubstitutions;
 		initFixedSubstitutions(uniqueThreadNumber);
@@ -46,7 +46,7 @@ public class ActionSubstituter
 	}
 	
 	/**
-	 * Applies fixed substitutions during the recording phase.
+	 * Applies fixed substitutions during the playback phase.
 	 * 
 	 */
 	public void applyFixedSubstitutions(HTTPAction action)
@@ -65,55 +65,58 @@ public class ActionSubstituter
 	}
 	
 	/**
-	 * Applies variable names in the recording phase
-	 * 
-	 */
-	public void applyVariableNames(PlayerHTTPAction action)
-	{
-		if(!action.isHasVariables()) return;
-		
-		for (ActionVariable variable : variableSubstitutions)
-		{
-			//Not all variables apply to all paths
-			if(!variable.applyPathMatches(action.getPath())) continue;
-			action.setContent(variable.substituteVariableName(action.getContent()));
-		}
-	}
-	
-	/**
-	 * Applies variable values in the playback phase.
+	 * Applies variable values to a given HTTP Action in the playback phase.
 	 */
 	public void applyVariableValues(PlayerHTTPAction action)
 	{
-		if(!action.isHasVariables()) return;
-		
-		for (ActionVariable variable : variableSubstitutions)
+		for (VariableSubstitution variable : action.getReplacementVariables())
 		{
 			//We may not have a value for this variable
 			String value = variableValues.get(variable.getVariableName());
 			if (null == value) continue;
-			
-			//Not all variables apply to all paths
-			if(!variable.applyPathMatches(action.getPath())) continue;
-			
-			action.setContent(variable.substituteVariableValue(action.getContent(), value));
+			action.setContent(variable.replaceVariable(action.getContent(), value));
 		}
 	}
 	
 	/**
-	 * Retrieves variable values in the playback phase.
+	 * Retrieves variable values from a given HTTP Action in the playback phase.
 	 */
 	public void retrieveVariableValues(PlayerHTTPAction action, String responseBody)
 	{
-		if(!action.isHasVariables()) return;
-		
-		for (ActionVariable variable : variableSubstitutions)
+		for (VariableSubstitution variable : action.getRetrievalVariables())
 		{			
-			//Not all variables apply to all paths
-			if(!variable.retrievalPathMatches(action.getPath())) continue;
-			
-			action.setContent(variable.substituteVariableValue(action.getContent(), value));
+			String value = variable.retrieveVariable(responseBody);
+			if(null == value) continue;
+			variableValues.put(variable.getVariableName(), value);
 		}
+	}
+	
+	/**
+	 * Indicates all Variables that a given HTTP Action will retrieve
+	 */
+	public List<VariableSubstitution> retrievalVariablesForAction(PlayerHTTPAction action)
+	{
+		List<VariableSubstitution> retrievalVariables = new ArrayList<VariableSubstitution>(variableSubstitutions.size());
+		for (VariableSubstitution variable : variableSubstitutions)
+		{
+			//Not all variables apply to all paths
+			if(variable.retrievalPathMatches(action.getPath())) retrievalVariables.add(variable);
+		}
+		return retrievalVariables;
+	}
+	
+	/**
+	 * Indicates all Variables that a given HTTP Action will replace
+	 */
+	public List<VariableSubstitution> replacementVariablesForAction(PlayerHTTPAction action)
+	{
+		List<VariableSubstitution> replacementVariables = new ArrayList<VariableSubstitution>(variableSubstitutions.size());
+		for (VariableSubstitution variable : variableSubstitutions)
+		{
+			//Not all variables apply to all paths
+			if(variable.replacementPathMatches(action.getPath())) replacementVariables.add(variable);
+		}
+		return replacementVariables;
 	}
 	
 	/**

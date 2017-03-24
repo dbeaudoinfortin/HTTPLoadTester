@@ -1,6 +1,7 @@
 package com.dbf.loadtester.recorder.filter;
 
-import java.util.Map;
+import java.util.List;
+import com.dbf.loadtester.common.action.substitutions.FixedSubstitution;
 
 /**
  * Options specific to the Recorder Servlet Filter
@@ -14,10 +15,8 @@ public class RecorderServletFilterOptions
 	private boolean enableJMX;
 	private int restPort;
 	
-	private Map<String, String> pathSubs;
-	private Map<String, String> querySubs;
-	private Map<String, String> bodySubs;
-	
+	private List<FixedSubstitution> fixedSubs;
+
 	public String getTestPlanDirectory()
 	{
 		return testPlanDirectory;
@@ -38,33 +37,14 @@ public class RecorderServletFilterOptions
 		this.immediateStart = immediateStart;
 	}
 	
-	public Map<String, String> getPathSubs()
+	public List<FixedSubstitution> getFixedSubs()
 	{
-		return pathSubs;
+		return fixedSubs;
 	}
 	
-	public void setPathSubs(Map<String, String> pathSubs)
+	public void setFixedSubs(List<FixedSubstitution> fixedSubs)
 	{
-		this.pathSubs = pathSubs;
-	}
-	
-	public Map<String, String> getQuerySubs()
-	{
-		return querySubs;
-	}
-	public void setQuerySubs(Map<String, String> querySubs)
-	{
-		this.querySubs = querySubs;
-	}
-	
-	public Map<String, String> getBodySubs()
-	{
-		return bodySubs;
-	}
-	
-	public void setBodySubs(Map<String, String> bodySubs)
-	{
-		this.bodySubs = bodySubs;
+		this.fixedSubs = fixedSubs;
 	}
 	
 	
@@ -80,24 +60,12 @@ public class RecorderServletFilterOptions
 		return this;
 	}
 	
-	public RecorderServletFilterOptions withPathSubs(Map<String, String> pathSubs)
+	public RecorderServletFilterOptions withFixedSubs(List<FixedSubstitution> fixedSubs)
 	{
-		this.pathSubs = pathSubs;
+		this.fixedSubs = fixedSubs;
 		return this;
 	}
 	
-	public RecorderServletFilterOptions withQuerySubs(Map<String, String> querySubs)
-	{
-		this.querySubs = querySubs;
-		return this;
-	}
-	
-	public RecorderServletFilterOptions withBodySubs(Map<String, String> bodySubs)
-	{
-		this.bodySubs = bodySubs;
-		return this;
-	}
-
 	public boolean isEnableREST()
 	{
 		return enableREST;

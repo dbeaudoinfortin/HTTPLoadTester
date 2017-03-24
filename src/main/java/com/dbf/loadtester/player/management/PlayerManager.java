@@ -73,6 +73,7 @@ public class PlayerManager implements PlayerManagerMBean
 	@Override
 	public void setThreadCount(int threadCount)
 	{
+		if(isRunning()) throw new RuntimeException("Can't modify configuration while running.");
 		config.setThreadCount(threadCount);
 	}
 
@@ -97,6 +98,7 @@ public class PlayerManager implements PlayerManagerMBean
 	@Override
 	public void setMinRunTime(long minRunTime)
 	{
+		if(isRunning()) throw new RuntimeException("Can't modify configuration while running.");
 		config.setMinRunTime(minRunTime);
 	}
 
@@ -110,6 +112,7 @@ public class PlayerManager implements PlayerManagerMBean
 	@Override
 	public void setTestPlanFile(String testPlanFile)
 	{
+		if(isRunning()) throw new RuntimeException("Can't modify configuration while running.");
 		config.setTestPlanFile(new File(testPlanFile));	
 	}
 
@@ -122,6 +125,7 @@ public class PlayerManager implements PlayerManagerMBean
 	@Override
 	public void setHost(String host)
 	{
+		if(isRunning()) throw new RuntimeException("Can't modify configuration while running.");
 		config.setHost(host);
 	}
 
@@ -134,6 +138,7 @@ public class PlayerManager implements PlayerManagerMBean
 	@Override
 	public void setHttpPort(int httpPort)
 	{
+		if(isRunning()) throw new RuntimeException("Can't modify configuration while running.");
 		config.setHttpPort(httpPort);
 	}
 
@@ -146,6 +151,7 @@ public class PlayerManager implements PlayerManagerMBean
 	@Override
 	public void setHttpsPort(int httpsPort)
 	{
+		if(isRunning()) throw new RuntimeException("Can't modify configuration while running.");
 		config.setHttpsPort(httpsPort);
 		
 	}
@@ -164,16 +170,22 @@ public class PlayerManager implements PlayerManagerMBean
 	}
 	
 	@Override
-	public boolean isUseSubstitutions()
+	public boolean isUseFixedSubstitutions()
 	{
-		return config.isUseSubstitutions();
+		return config.isUseFixedSubstitutions();
 	}
 	
 	@Override
-	public void setUseSubstitutions(boolean useSubstitutions)
+	public void setUseFixedSubstitutions(boolean useFixedSubstitutions)
 	{
 		if(isRunning()) throw new RuntimeException("Can't modify configuration while running.");
-		config.setUseSubstitutions(useSubstitutions);;	
+		config.setUseFixedSubstitutions(useFixedSubstitutions);;	
+	}
+	
+	@Override
+	public boolean isUseVariableSubstitutions()
+	{
+		return config.isUseVariableSubstitutions();
 	}
 
 	@Override
@@ -185,6 +197,7 @@ public class PlayerManager implements PlayerManagerMBean
 	@Override
 	public void setOverrideHttps(boolean overrideHttps)
 	{
+		if(isRunning()) throw new RuntimeException("Can't modify configuration while running.");
 		config.setOverrideHttps(overrideHttps);;
 	}
 
@@ -215,6 +228,7 @@ public class PlayerManager implements PlayerManagerMBean
 	@Override
 	public void setShareConnections(boolean shareConnections)
 	{
+		if(isRunning()) throw new RuntimeException("Can't modify configuration while running.");
 		config.setShareConnections(shareConnections);
 	}
 	
@@ -227,6 +241,7 @@ public class PlayerManager implements PlayerManagerMBean
 	@Override
 	public void setCookieWhiteList(List<String> cookieWhiteList)
 	{
+		if(isRunning()) throw new RuntimeException("Can't modify configuration while running.");
 		config.setCookieWhiteList(new HashSet<String>(cookieWhiteList));
 	}
 	

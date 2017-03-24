@@ -16,15 +16,7 @@ public interface RecorderManagerMBean
 	
 	public void setTestPlanPath(String testPlanPath);
 	
-	public void setPathSubstitutions(String map);
+	public void setFixedSubstitutions(String map);
 	
-	public String getPathSubstitutions();
-
-	public void setQuerySubstitutions(String map);
-
-	public String getQuerySubstitutions();
-	
-	public void setBodySubstitutions(String map);
-
-	public String getBodySubstitutions();
+	public String getFixedSubstitutions();
 }

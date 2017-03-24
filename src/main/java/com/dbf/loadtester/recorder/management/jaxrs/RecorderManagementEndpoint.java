@@ -63,54 +63,19 @@ public class RecorderManagementEndpoint
 	}
 	
 	@GET
-	@Path("/pathSubstitutions")
+	@Path("/fixedSubstitutions")
 	@Produces({ MediaType.APPLICATION_JSON })
-	public String pathSubstitutions()
+	public String fixedSubstitutions()
 	{
-		return manager.getPathSubstitutions();
+		return manager.getFixedSubstitutions();
 	}
 	
 	@POST
-	@Path("/pathSubstitutions")
+	@Path("/fixedSubstitutions")
 	@Consumes({ MediaType.APPLICATION_JSON })
-	public Response pathSubstitutions(String pathSubstitutions)
+	public Response fixedSubstitutions(String fixedSubstitutions)
 	{
-		manager.setPathSubstitutions(pathSubstitutions);
+		manager.setFixedSubstitutions(fixedSubstitutions);
 		return Response.ok().build();
 	}
-	
-	@GET
-	@Path("/querySubstitutions")
-	@Produces({ MediaType.APPLICATION_JSON })
-	public String querySubstitutions()
-	{
-		return manager.getQuerySubstitutions();
-	}
-	
-	@POST
-	@Path("/querySubstitutions")
-	@Consumes({ MediaType.APPLICATION_JSON })
-	public Response querySubstitutions(String querySubstitutions)
-	{
-		manager.setQuerySubstitutions(querySubstitutions);
-		return Response.ok().build();
-	}
-	
-	@GET
-	@Path("/bodySubstitutions")
-	@Produces({ MediaType.APPLICATION_JSON })
-	public String bodySubstitutions()
-	{
-		return manager.getBodySubstitutions();
-	}
-	
-	@POST
-	@Path("/bodySubstitutions")
-	@Consumes({ MediaType.APPLICATION_JSON })
-	public Response bodySubstitutions(String bodySubstitutions)
-	{
-		manager.setBodySubstitutions(bodySubstitutions);
-		return Response.ok().build();
-	}
-	
 }

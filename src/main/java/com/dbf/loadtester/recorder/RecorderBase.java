@@ -9,6 +9,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Random;
@@ -20,6 +21,8 @@ import javax.servlet.http.HttpServletRequest;
 
 import com.dbf.loadtester.common.action.HTTPAction;
 import com.dbf.loadtester.common.action.converter.HTTPActionConverter;
+import com.dbf.loadtester.common.action.substitutions.FixedSubstitution;
+import com.dbf.loadtester.common.action.substitutions.SubstitutionType;
 import com.dbf.loadtester.common.json.JsonEncoder;
 import com.dbf.loadtester.common.util.Utils;
 
@@ -54,9 +57,7 @@ public class RecorderBase
 	private Path testPlanPath = null;
 	private BufferedWriter testPlanWriter = null;
 	
-	private Map<Pattern, String> pathSubs = new HashMap<Pattern, String>();
-	private Map<Pattern, String> bodySubs = new HashMap<Pattern, String>();
-	private Map<Pattern, String> querySubs = new HashMap<Pattern, String>();
+	private List<FixedSubstitution> fixedSubs;
 	
 	static
 	{
@@ -91,7 +92,7 @@ public class RecorderBase
 			previousTime = currentDate.getTime() ;
 			
 			HTTPAction httpAction = actionConverter.convertServletRequestToHTTPAction(httpRequestWrapper, currentDate, timePassed);
-			applySubstitutions(httpAction);
+			httpAction.setHasSubstitutions(applySubstitutions(httpAction));
 	      	saveHTTPAction(httpAction);
 	      	
 	      	return httpRequestWrapper;
@@ -104,22 +105,37 @@ public class RecorderBase
 		return httpRequest;
 	}
 	
-	private void applySubstitutions(HTTPAction httpAction)
+	
+	/**
+	 * Applies all fixed substitutions.
+	 * Returns true if any substitutions were applied, false otherwise. 
+	 */
+	private boolean applySubstitutions(HTTPAction httpAction)
 	{
-		if(pathSubs.size() > 0 && httpAction.getPath() != null)
-			httpAction.setPath(Utils.applyRegexSubstitutions(httpAction.getPath(), pathSubs));
+		if(fixedSubs == null || fixedSubs.isEmpty()) return false;
 		
-		if(querySubs.size() > 0 && httpAction.getQueryString() != null)
-    		httpAction.setQueryString(Utils.applyRegexSubstitutions(httpAction.getQueryString(), querySubs));
-		
-		//Request Body only applies to PUT and POST 
-		if(bodySubs.size() > 0 && httpAction.getContent() != null && ("PUT".equals(httpAction.getMethod()) || "POST".equals(httpAction.getMethod())))
+		boolean hasSubs = false;
+		for(FixedSubstitution sub : fixedSubs)
 		{
-			//Content length needs to be updated
-			String content = Utils.applyRegexSubstitutions(httpAction.getContent(), bodySubs);
-			httpAction.setContent(content);
-			httpAction.setContentLength(content.length());
+			if (sub.getType() == SubstitutionType.path)
+			{
+				if(httpAction.getPath() != null)
+					
+					hasSubs |= httpAction.setPath(sub.applySubstitution(httpAction.getPath()));
+			}
+			else if (sub.getType() == SubstitutionType.query)
+			{
+				if(httpAction.getQueryString() != null)
+					hasSubs |= httpAction.setQueryString(sub.applySubstitution(httpAction.getQueryString()));
+			}
+			else if (sub.getType() == SubstitutionType.body)
+			{
+				//Request Body only applies to PUT and POST 
+				if(httpAction.getContent() != null && ("PUT".equals(httpAction.getMethod()) || "POST".equals(httpAction.getMethod())))
+					hasSubs |= httpAction.setContent(sub.applySubstitution(httpAction.getContent()));
+			}
 		}
+		return hasSubs;
 	}	
 	
 	/**
@@ -206,27 +222,6 @@ public class RecorderBase
 				+ "-" + (new Random()).nextInt(Integer.MAX_VALUE) + "-";
 	}
 	
-	private Map<Pattern, String> convertToSubstitutionMap(Map<String, String> map) 
-	{
-		Map<Pattern, String> returnMap = new HashMap<Pattern, String>();
-		for(Entry<String, String> entry : map.entrySet())
-		{
-			//Because of runtime type-erasure during Json conversion, we need the toString().
-			returnMap.put(Pattern.compile(entry.getKey()), entry.getValue().toString());
-		}
-		return returnMap;
-	}
-	
-	private Map<String, String> convertFromSubstitutionMap(Map<Pattern, String> map) 
-	{
-		Map<String, String> returnMap = new HashMap<String, String>();
-		for(Entry<Pattern, String> entry : map.entrySet())
-		{
-			returnMap.put(entry.getKey().pattern(), entry.getValue());
-		}
-		return returnMap;
-	}
-	
 	private boolean ignoreExtension(String path)
 	{
 		if(path == null || path.equals("")) return false;
@@ -259,34 +254,20 @@ public class RecorderBase
 	{
 		this.testPlanPath = testPlanPath;
 	}
-	
-	public Map<String, String> getPathSubs()
+
+	public List<FixedSubstitution> getFixedSubs()
 	{
-		return convertFromSubstitutionMap(pathSubs);
+		return fixedSubs;
 	}
 
-	public void setPathSubs(Map<String, String> pathSubs)
+	public void setFixedSubs(List<FixedSubstitution> fixedSubs)
 	{
-		this.pathSubs = convertToSubstitutionMap(pathSubs);
-	}
-
-	public Map<String, String> getBodySubs()
-	{
-		return convertFromSubstitutionMap(bodySubs);
-	}
-
-	public void setBodySubs(Map<String, String> bodySubs)
-	{
-		this.bodySubs = convertToSubstitutionMap(bodySubs);
-	}
-
-	public Map<String, String> getQuerySubs()
-	{
-		return convertFromSubstitutionMap(querySubs);
-	}
-
-	public void setQuerySubs(Map<String, String> querySubs)
-	{
-		this.querySubs = convertToSubstitutionMap(querySubs);
+		if(fixedSubs != null && !fixedSubs.isEmpty())
+		{
+			fixedSubs.forEach(sub -> sub.init());
+		}
+		
+		//Set only after init
+		this.fixedSubs = fixedSubs;
 	}
 }
