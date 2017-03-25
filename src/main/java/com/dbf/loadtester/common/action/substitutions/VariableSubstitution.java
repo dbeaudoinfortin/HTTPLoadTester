@@ -136,5 +136,4 @@ public class VariableSubstitution implements Substitution
 		sb.append("}");
 		return sb.toString();
 	}
-
 }

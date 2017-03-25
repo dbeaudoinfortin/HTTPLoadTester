@@ -11,6 +11,7 @@ import org.apache.commons.cli.ParseException;
 import com.dbf.loadtester.common.action.substitutions.FixedSubstitution;
 import com.dbf.loadtester.common.util.Utils;
 import com.dbf.loadtester.player.config.Constants;
+import com.google.gson.reflect.TypeToken;
 
 public class RecorderProxyOptions
 {
@@ -141,7 +142,7 @@ public class RecorderProxyOptions
 		{
 			try
 			{
-				fixedSubs = Utils.convertArgToObjectList(cmd.getOptionValue("fixedSubs"));
+				fixedSubs = Utils.convertArgToObjectList(cmd.getOptionValue("fixedSubs"),(new TypeToken<List<FixedSubstitution>>(){}).getType());
 			}
 			catch (Exception e)
 	    	{
@@ -153,6 +154,7 @@ public class RecorderProxyOptions
 	public static void printOptions()
 	{
 		HelpFormatter formatter = new HelpFormatter();
+		formatter.setWidth(120);
 		formatter.printHelp(" ", options);
 	}
 

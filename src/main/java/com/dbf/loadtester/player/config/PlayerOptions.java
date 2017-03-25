@@ -16,6 +16,8 @@ import com.dbf.loadtester.common.action.substitutions.VariableSubstitution;
 import com.dbf.loadtester.common.json.JsonEncoder;
 import com.dbf.loadtester.common.util.Utils;
 import com.dbf.loadtester.player.stats.PlayerStats;
+import com.google.gson.reflect.TypeToken;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -40,7 +42,7 @@ public class PlayerOptions
 		options.addOption("keepAlive", false, "Keep Load Test Player alive after all threads have halted.");
 		options.addOption("overrideHttps", false, "Override all HTTPs actions with HTTP");
 		options.addOption("applyFixedSubs", false, "Apply fixed substitutions, such as <THREAD_ID>, in the test plan.");
-		options.addOption("variableSubs", false, "Variable substitutions in Base64 encoded Json format.");
+		options.addOption("variableSubs", true, "Variable substitutions in Base64 encoded Json format.");
 		options.addOption("restPort", true, "Port to use for REST API managment interface.");
 		options.addOption("disableREST", false, "Disable the REST API managment interface.");
 		options.addOption("disableJMX", false, "Disable the JMX managment interface.");
@@ -227,7 +229,7 @@ public class PlayerOptions
 		if(cmd.hasOption("variableSubs"))
 		{
 			//Use setter, it takes care of the init
-			this.setVariableSubstitutions(Utils.convertArgToObjectList(cmd.getOptionValue("variableSubs")));
+			this.setVariableSubstitutions(Utils.convertArgToObjectList(cmd.getOptionValue("variableSubs"), (new TypeToken<List<VariableSubstitution>>(){}).getType()));
 		}
 		
 		if(null != variableSubstitutions && variableSubstitutions.size() > 0)
@@ -278,6 +280,7 @@ public class PlayerOptions
 	public static void printOptions()
 	{
 		HelpFormatter formatter = new HelpFormatter();
+		formatter.setWidth(120);
 		formatter.printHelp(" ", options);
 	}
 

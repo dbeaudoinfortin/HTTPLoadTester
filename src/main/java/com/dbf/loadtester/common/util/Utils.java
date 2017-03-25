@@ -2,6 +2,7 @@ package com.dbf.loadtester.common.util;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.reflect.Type;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -13,9 +14,6 @@ import org.slf4j.ILoggerFactory;
 import org.slf4j.LoggerFactory;
 
 import com.dbf.loadtester.common.json.JsonEncoder;
-import com.google.gson.JsonSyntaxException;
-import com.google.gson.reflect.TypeToken;
-
 import ch.qos.logback.classic.LoggerContext;
 
 public class Utils
@@ -81,14 +79,15 @@ public class Utils
 		return contentType.trim().toLowerCase();
 	}
 	
-	public static <T> List<T> convertArgToObjectList(String arg)
+	@SuppressWarnings("unchecked")
+	public static <T> List<T> convertArgToObjectList(String arg, Type type)
 	{
 		String base64Decoded = new String(Base64.decodeBase64(arg));
 		try
 		{
-			return JsonEncoder.fromJson(base64Decoded, (new TypeToken<List<T>>(){}).getType());
+			return (List<T>) JsonEncoder.fromJson(base64Decoded, type);
 		}
-		catch (JsonSyntaxException e)
+		catch (Exception e)
 		{
 			throw new IllegalArgumentException("Failed to parse Json value '" + base64Decoded + "'.",e);
 		}
