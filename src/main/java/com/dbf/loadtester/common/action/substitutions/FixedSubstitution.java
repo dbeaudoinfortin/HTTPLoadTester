@@ -45,4 +45,17 @@ public class FixedSubstitution implements Substitution
 		this.replacement = replacement;
 	}
 	
+	@Override
+	public String toString()
+	{
+		StringBuilder sb = new StringBuilder();
+		sb.append("{type=");
+		sb.append(type);
+		sb.append(", replacement=");
+		sb.append(replacement);
+		sb.append(", textToMatch=");
+		sb.append(textToMatch);
+		sb.append("}");
+		return sb.toString();
+	}
 }
