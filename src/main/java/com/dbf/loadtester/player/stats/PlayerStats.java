@@ -82,7 +82,7 @@ public class PlayerStats
 		{
 			synchronized (actionTime)
 			{
-				cloneActionTimes.put(actionTime.getKey(), actionTime.getValue().clone());
+				cloneActionTimes.put(actionTime.getKey(), new TimeStats(actionTime.getValue()));
 			}
 		}
 		return cloneActionTimes;
@@ -92,7 +92,7 @@ public class PlayerStats
 	{
 		synchronized (testPlanTime) 
 		{
-			return testPlanTime.clone();
+			return new TimeStats(testPlanTime);
 		}
 	}
 	
@@ -100,7 +100,7 @@ public class PlayerStats
 	{
 		synchronized (aggregateActionTime) 
 		{
-			return aggregateActionTime.clone();
+			return new TimeStats(aggregateActionTime);
 		}
 	}
 }

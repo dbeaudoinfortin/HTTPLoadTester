@@ -191,7 +191,7 @@ public class LoadTestThread implements Runnable
 		HttpRequestBase request = action.getHttpRequest();
 		try
 		{
-    		startTime = System.currentTimeMillis();
+    		startTime = System.nanoTime();
     		response = httpClient.execute(request);
     		
     		//Consume the response body fully so that the connection can be reused.
@@ -214,7 +214,7 @@ public class LoadTestThread implements Runnable
 	    		}
     		}
 
-    		endTime = System.currentTimeMillis();
+    		endTime = System.nanoTime();
 		}
 		catch(Exception e)
 		{
@@ -227,7 +227,7 @@ public class LoadTestThread implements Runnable
 		}
 		
 		log.info("Thread " + threadNumber + " recieved HTTP code " + response.getStatusLine().getStatusCode() + " for action " + action + ".");
-		action.setLastRunDuration(endTime - startTime);
+		action.setLastRunDuration((endTime - startTime)/1000000);
 		
 		return response;
 	}

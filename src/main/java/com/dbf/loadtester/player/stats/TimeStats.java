@@ -1,7 +1,6 @@
 package com.dbf.loadtester.player.stats;
 
 import java.util.Date;
-import java.util.LinkedList;
 
 /**
  * Holds basic time based statistics.
@@ -11,17 +10,45 @@ import java.util.LinkedList;
  */
 public class TimeStats
 {
-	private static final int ROLLING_DURATIONS_MAX = 10;
-	
 	private long min = Long.MAX_VALUE;
 	private long max = Long.MIN_VALUE;
 	private long total;
 	private int count;
 	private double average;
-	private double rollingAverage;
-	private transient long rollingTotal;
-	private transient LinkedList<Long> rollingDurations = new LinkedList<Long>();
 	private Date lastUpdated;
+	private final RollingStats rolling5;
+	private final RollingStats rolling10;
+	private final RollingStats rolling25;
+	private final RollingStats rolling50;
+	private final RollingStats rolling100;
+	private final RollingStats rolling250;
+	
+	public TimeStats()
+	{
+		rolling5 = new RollingStats(5);
+		rolling10 = new RollingStats(10);
+		rolling25 = new RollingStats(25);
+		rolling50 = new RollingStats(50);
+		rolling100 = new RollingStats(100);
+		rolling250 = new RollingStats(250);
+	}
+	
+	public TimeStats(TimeStats other)
+	{
+		this.min = other.min;
+		this.max = other.max;
+		this.total = other.total;
+		this.count = other.count;
+		this.average = other.average;
+		this.lastUpdated = other.lastUpdated;
+		rolling5 = new RollingStats(other.rolling5);
+		rolling10 = new RollingStats(other.rolling10);
+		rolling25 = new RollingStats(other.rolling25);
+		rolling50 = new RollingStats(other.rolling50);
+		rolling100 = new RollingStats(other.rolling100);
+		rolling250 = new RollingStats(other.rolling250);
+
+	}
 	
 	/**
 	 * Increment stats by adding a new duration.
@@ -31,6 +58,8 @@ public class TimeStats
 	 */
 	public void increment(long duration)
 	{
+		if(duration < 1) duration = 1;
+		
 		lastUpdated = new Date();
 		
 		total += duration;
@@ -39,26 +68,12 @@ public class TimeStats
 		min = Math.min(duration, min);
 		max = Math.max(duration, max);
 		
-		//Remove the first duration
-		if(rollingDurations.size() == ROLLING_DURATIONS_MAX)
-			rollingTotal -= rollingDurations.removeFirst();
-		
-		rollingDurations.addLast(duration);
-		rollingTotal += duration;
-		rollingAverage = rollingTotal/rollingDurations.size();
-	}
-	
-	public TimeStats clone()
-	{
-		TimeStats clone = new TimeStats();
-		clone.total = total;
-		clone.count = count;
-		clone.average = average;
-		clone.min = min;
-		clone.max = max;
-		clone.lastUpdated = lastUpdated;
-		clone.rollingAverage = rollingAverage;
-		return clone;
+		rolling5.increment(duration);
+		rolling10.increment(duration);
+		rolling25.increment(duration);
+		rolling50.increment(duration);
+		rolling100.increment(duration);
+		rolling250.increment(duration);
 	}
 	
 	@Override
@@ -69,39 +84,34 @@ public class TimeStats
 		sb.append("min:");
 		if(min == Long.MAX_VALUE)
 		{
-			sb.append("N/A ");
+			sb.append("N/A");
 		}
 		else
 		{
 			sb.append(String.format("%.2f",min / 1000.0));
-			sb.append("s ");
+			sb.append("s");
 		}
 
-		sb.append("max:");
+		sb.append("/tmax:");
 		if(max == Long.MIN_VALUE)
 		{
-			sb.append("N/A ");
+			sb.append("N/A");
 		}
 		else
 		{
 			sb.append(String.format("%.2f",max / 1000.0));
-			sb.append("s ");
+			sb.append("s");
 		}
 
-		sb.append("total:");
+		sb.append("/ttotal:");
 		sb.append(String.format("%.2f",total / 1000.0));
-		sb.append("s ");
+		sb.append("s");
 
-		sb.append("count:");
+		sb.append("/tcount:");
 		sb.append(count);
-		sb.append(" ");
 
-		sb.append("avg:");
+		sb.append("/tavg:");
 		sb.append(String.format("%.2f",average / 1000.0));
-		sb.append("s ");
-		
-		sb.append("rolling avg:");
-		sb.append(String.format("%.2f",rollingAverage / 1000.0));
 		sb.append("s");
 
 		return sb.toString();
