@@ -60,6 +60,8 @@ public interface PlayerManagerMBean
 	
 	public TimeStats getTestPlanStats();
 	
+	public Integer getTestPlanSize();
+	
 	public TimeStats getAggregateActionStats();
 	
 	public boolean isShareConnections();

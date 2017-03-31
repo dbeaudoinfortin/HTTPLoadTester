@@ -6,6 +6,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 
+import com.dbf.loadtester.common.action.HTTPAction;
 import com.dbf.loadtester.common.action.substitutions.VariableSubstitution;
 import com.dbf.loadtester.common.json.JsonEncoder;
 import com.dbf.loadtester.player.LoadTestCoordinator;
@@ -209,6 +210,13 @@ public class PlayerManager implements PlayerManagerMBean
 	public TimeStats getTestPlanStats()
 	{
 		return config.getGlobalPlayerStats().getTestPlanStats();
+	}
+	
+	@Override
+	public Integer getTestPlanSize()
+	{
+		List<HTTPAction> actions = config.getActions();
+		return actions == null ? 0 : actions.size();
 	}
 	
 	@Override

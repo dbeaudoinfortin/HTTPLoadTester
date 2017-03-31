@@ -235,6 +235,14 @@ public class PlayerManagementEndpoint
 	}
 	
 	@GET
+	@Path("/testPlanSize")
+	@Produces({ MediaType.APPLICATION_JSON })
+	public Integer testPlanSize()
+	{
+		return manager.getTestPlanSize();
+	}
+	
+	@GET
 	@Path("/aggregateActionStats")
 	@Produces({ MediaType.APPLICATION_JSON })
 	public TimeStats aggregateActionStats()
