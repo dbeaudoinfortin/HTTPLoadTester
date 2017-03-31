@@ -92,7 +92,7 @@ public class TimeStats
 			sb.append("s");
 		}
 
-		sb.append("/tmax:");
+		sb.append("\tmax:");
 		if(max == Long.MIN_VALUE)
 		{
 			sb.append("N/A");
@@ -103,14 +103,14 @@ public class TimeStats
 			sb.append("s");
 		}
 
-		sb.append("/ttotal:");
+		sb.append("\ttotal:");
 		sb.append(String.format("%.2f",total / 1000.0));
 		sb.append("s");
 
-		sb.append("/tcount:");
+		sb.append("\tcount:");
 		sb.append(count);
 
-		sb.append("/tavg:");
+		sb.append("\tavg:");
 		sb.append(String.format("%.2f",average / 1000.0));
 		sb.append("s");
 
