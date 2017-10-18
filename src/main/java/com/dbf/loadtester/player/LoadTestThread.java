@@ -43,20 +43,21 @@ public class LoadTestThread implements Runnable
 	private final int httpPort;
 	private final int httpsPort;
 	private final boolean overrideHttps;
+	private final boolean runActionsConcurrently;
 	private final List<PlayerHTTPAction> actions;
 	private final PlayerStats globalPlayerStats;
 	private final LoadTestCoordinator master;
 	private final ApacheRequestConverter requestConverter;
 	private final Collection<String> cookieWhiteList;
-
-	public LoadTestThread(LoadTestCoordinator master, PlayerOptions config, int threadNumber, HttpClient httpClient, ApacheRequestConverter requestConverter)
+	
+	public LoadTestThread(LoadTestCoordinator master, PlayerOptions config, int threadNumber, HttpClient httpClient, ApacheRequestConverter requestConverter, long minRunTime)
 	{
 		this.threadNumber = threadNumber;
 		this.httpClient = httpClient;
 		this.actionDelay = config.getActionDelay();
 		this.useFixedSubstitutions = config.isUseFixedSubstitutions();
 		this.useVariableSubstitutions = config.hasVariableSubstitutions();
-		this.minRunTime = config.getMinRunTime();
+		this.minRunTime = minRunTime;
 		this.host = config.getHost();
 		this.httpPort = config.getHttpPort();
 		this.httpsPort = config.getHttpsPort();
@@ -66,9 +67,76 @@ public class LoadTestThread implements Runnable
 		this.requestConverter = requestConverter;
 		this.cookieWhiteList = config.getCookieWhiteList();
 		this.substituter = new ActionSubstituter(threadNumber, config.getVariableSubstitutions());
+		this.runActionsConcurrently = config.isConcurrentActions();
 		
 		//Initialize Actions last!
 		this.actions = initializeHTTPActions(config.getActions(), threadNumber);
+	}
+	
+	/**
+	 * Run each thread independently of all others. There is no coordination among threads.
+	 * Returns the number of times the test plan was executed
+	 * 
+	 * @throws Exception 
+	 */
+	private int runIndependantly(long threadStartTime) throws Exception
+	{
+		int runCount = 0; 
+		do
+		{
+			long testPlanStartTime = System.currentTimeMillis();
+			runTestPlan();
+			
+			//Record the time it took to execute the entire test plan
+			globalPlayerStats.recordTestPlanTime(System.currentTimeMillis() - testPlanStartTime);
+			
+			//After every test plan, we need to clear the cookies
+			cookieStore.clear();
+			
+			runCount++;
+		}
+		//Ensure that the threads runs for at least its minimum run time
+		//Note that the thread will always run the test plan at least once.
+		while(System.currentTimeMillis() - threadStartTime < minRunTime);
+		
+		return runCount;
+	}
+	
+	/**
+	 * Run each action of the test plan concurrently on different threads.
+	 * Each thread will grab the next action
+	 * Return the total number of actions run
+	 * @return 
+	 * 
+	 * @throws Exception 
+	 */
+	private int runConcurrently(long threadStartTime) throws Exception
+	{
+		int runCount = 0; 
+		
+		long lastActionTime = System.currentTimeMillis();
+		while(true)
+		{
+			//Get the index of the next action to execute.
+			//This is synchronized so the threads won't run the same action at the same time.
+			int textPlanAction = master.getNextTestPlanAction();
+			
+			//If configured, stop running when the end of the test plan is reached
+			if(textPlanAction < 0) break;
+			
+			//Run the action, while keeping track of timings
+			lastActionTime = runTestPlanAction(actions.get(textPlanAction), lastActionTime);
+			
+			//Break if shutdown is requested
+			if(lastActionTime < 0) break;
+			
+			runCount++;
+			
+			//Ensure that the threads runs for at least its minimum run time, if a minimum time is configured 
+			if(minRunTime > 0 && (System.currentTimeMillis() - threadStartTime >= minRunTime)) break;
+		}
+		
+		return runCount;
 	}
 	
 	@Override
@@ -76,29 +144,14 @@ public class LoadTestThread implements Runnable
 	{
 		try
 		{
-			int runCount = 0; 
 			long threadStartTime = System.currentTimeMillis();
-			do
-			{
-				long testPlanStartTime = System.currentTimeMillis();
-				runTestPlan();
-				
-				//Record the time it took to execute the entire test plan
-				globalPlayerStats.recordTestPlanTime(System.currentTimeMillis() - testPlanStartTime);
-				
-				//After every test plan, we need to clear the cookies
-				cookieStore.clear();
-				
-				runCount++;
-			}
-			//Ensure that the threads runs for at least its minimum run time
-			//Note that the thread will always run the test plan at least once.
-			while(System.currentTimeMillis() - threadStartTime < minRunTime);
-			
+			int runCount = runActionsConcurrently ? runConcurrently(threadStartTime) : runIndependantly(threadStartTime);
 			long endTime = System.currentTimeMillis();
-			double timeInMinutes = (endTime - threadStartTime)/60000.0;
+			double timeInMinutes = (endTime - threadStartTime)/60000.0;	
 			
- 			log.info("Thread " + threadNumber + " completed " + runCount + " run" + (runCount > 1 ? "s" : "") + " of the test plan in " + String.format("%.2f",timeInMinutes) + " minutes, including pauses." + (runCount > 1 ? " Average test plan time " + String.format("%.2f",timeInMinutes/runCount) + " minutes, including pauses." : ""));
+ 			log.info("Thread " + threadNumber + " completed " + runCount + (runActionsConcurrently ? " action(s)": " run(s) of the test plan")  + " in " + String.format("%.2f",timeInMinutes) 
+     			+ " minutes, including pauses." + (runCount > 1 ? " Average " + (runActionsConcurrently ? "action": "test plan") + " time " 
+     			+ String.format("%.2f",timeInMinutes/runCount) + " minutes, including pauses." : ""));
 		}
 		catch(InterruptedException e)
 		{
@@ -117,42 +170,58 @@ public class LoadTestThread implements Runnable
 	private void runTestPlan() throws Exception
 	{
 		long lastActionTime = System.currentTimeMillis();
-		
 		for(PlayerHTTPAction action : actions)
 		{
-			//Handle termination of the test plan via JMX/REST
-			if(!master.isRunning()) return;
+			lastActionTime = runTestPlanAction(action, lastActionTime);
 			
-			//Do all pre-action prep
-			//Do this before waiting so that the time it takes to prep is not added
-			//to the execution time of the action (or a adds as little as possible)
-			preActionRun(action);
-			
-			//By-pass Test Plan timings if desired
-			long waitTime = (actionDelay < 0 ? action.getTimePassed() : actionDelay);
-			
-			//Ensure that the start time of every action matches the timings in the test plan
-			long currentTime = System.currentTimeMillis();
-			while(currentTime - lastActionTime < waitTime)
-			{
-				if(!master.isRunning()) return;
-				Thread.sleep(10);
-				currentTime = System.currentTimeMillis();
-			}
-			
-			//Note that test plan timings are calculated from the start of execution of the last action
-			//NOT from the end of execution of the last action.
-			lastActionTime = currentTime;
-			
-			//Run the action and store the duration
-			//Note that the duration is the server response time including network delay
-			//It does not include the overhead of this thread
-			HttpResponse response =	runAction(action);
-			globalPlayerStats.recordActionTime(action.getIdentifier(), action.getLastRunDuration());
-			
-			//Handle all post-run processing
-			postActionRun(action, response);
+			//Break if shutdown is requested
+			if(lastActionTime < 0) return;
 		}
+	}
+	
+	/**
+	 * Run a single test plan action.
+	 * Return the system time at the start of execution of the action.
+	 * 
+	 * @param action
+	 * @param lastActionTime
+	 * @return
+	 * @throws Exception
+	 */
+	private long runTestPlanAction(PlayerHTTPAction action, long lastActionTime) throws Exception
+	{
+		//Handle termination of the test plan via JMX/REST
+		if(!master.isRunning()) return -1l;
+		
+		//Do all pre-action prep
+		//Do this before waiting so that the time it takes to prep is not added
+		//to the execution time of the action (or a adds as little as possible)
+		preActionRun(action);
+		
+		//By-pass Test Plan timings if desired
+		long waitTime = (actionDelay < 0 ? action.getTimePassed() : actionDelay);
+		
+		//Ensure that the start time of every action matches the timings in the test plan
+		long currentTime = System.currentTimeMillis();
+		while(currentTime - lastActionTime < waitTime)
+		{
+			if(!master.isRunning()) return -1l;
+			Thread.sleep(10);
+			currentTime = System.currentTimeMillis();
+		}
+		
+		//Run the action and store the duration
+		//Note that the duration is the server response time including network delay
+		//It does not include the overhead of this thread
+		HttpResponse response =	runAction(action);
+		globalPlayerStats.recordActionTime(action.getIdentifier(), action.getLastRunDuration());
+		
+		//Handle all post-run processing
+		postActionRun(action, response);
+		
+		//Note that test plan timings are calculated from the start of execution of the last action
+		//NOT from the end of execution of the last action.
+		return currentTime;
 	}
 	
 	private void preActionRun(PlayerHTTPAction action) throws Exception

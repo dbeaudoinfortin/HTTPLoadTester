@@ -47,6 +47,7 @@ public class PlayerOptions
 		options.addOption("disableREST", false, "Disable the REST API managment interface.");
 		options.addOption("disableJMX", false, "Disable the JMX managment interface.");
 		options.addOption("shareConnections", false, "Share connections (sockets) accross threads for improved efficiency.");
+		options.addOption("concurrentActions", false, "Run the test plan actions concurrently. Used for stateless test plans.");
 	}
 	
 	private String host = Constants.DEFAULT_HOST;
@@ -66,9 +67,11 @@ public class PlayerOptions
 	private boolean disableREST = false;
 	private boolean disableJMX = false;
 	private boolean shareConnections = false;
+	private boolean concurrentActions = false;
 	private List<HTTPAction> actions;
 	private PlayerStats globalPlayerStats = new PlayerStats();
 	private Collection<String> cookieWhiteList = new HashSet<String>();
+	private long totalTestPlanTime = 0;
 
 	public PlayerOptions(){}
 
@@ -123,6 +126,12 @@ public class PlayerOptions
 		{
 			shareConnections = true;
 			log.info("Share Connections flag set, a single client and connection pool will be used across all threads of the load tester.");
+		}
+		
+		if(cmd.hasOption("concurrentActions"))
+		{
+			concurrentActions = true;
+			log.info("Concurrent Actions flag set, test plan actions will be run concurrently according to the configured thread count.");
 		}
 		
 		if(cmd.hasOption("disableREST"))
@@ -263,13 +272,7 @@ public class PlayerOptions
 		long totalTestPlanTime = 0;
 		for(HTTPAction action : actions)
 			totalTestPlanTime += action.getTimePassed();
-
-		//Minimum runtime ensures that no thread will terminate before the last thread finished at least 1 run.
-		if(minRunTime < 0)
-		{
-			minRunTime = ((threadCount - 1) * staggerTime) + totalTestPlanTime;
-			log.info("Using default minimum run time: " + String.format("%.2f",minRunTime/60000.0) + " minutes");
-		}
+		this.totalTestPlanTime = totalTestPlanTime;
 		
 		//Clear out all existing stats
 		globalPlayerStats = new PlayerStats(actions);
@@ -434,6 +437,16 @@ public class PlayerOptions
 		this.shareConnections = shareConnections;
 	}
 	
+	public boolean isConcurrentActions()
+	{
+		return concurrentActions;
+	}
+
+	public void setConcurrentActions(boolean concurrentActions)
+	{
+		this.concurrentActions = concurrentActions;
+	}
+	
 	public Collection<String> getCookieWhiteList()
 	{
 		return cookieWhiteList;
@@ -459,5 +472,10 @@ public class PlayerOptions
 		if(variableSubstitutions != null && !variableSubstitutions.isEmpty())
 			variableSubstitutions.forEach(sub -> sub.init());
 		this.variableSubstitutions = variableSubstitutions;
+	}
+
+	public long getTotalTestPlanTime()
+	{
+		return totalTestPlanTime;
 	}
 }

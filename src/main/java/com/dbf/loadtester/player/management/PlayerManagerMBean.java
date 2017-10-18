@@ -68,6 +68,10 @@ public interface PlayerManagerMBean
 
 	public void setShareConnections(boolean shareConnections);
 	
+	public boolean isConcurrentActions();
+
+	public void setConcurrentActions(boolean concurrentActions);
+	
 	public List<String> getCookieWhiteList();
 
 	public void setCookieWhiteList(List<String> cookieWhiteList);
