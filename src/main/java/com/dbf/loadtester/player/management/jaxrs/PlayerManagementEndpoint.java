@@ -267,6 +267,23 @@ public class PlayerManagementEndpoint
 		return Response.ok().build();
 	}
 	
+	@GET
+	@Path("/concurrentActions")
+	@Produces({ MediaType.APPLICATION_JSON })
+	public Boolean concurrentActions()
+	{
+		return manager.isConcurrentActions();
+	}
+	
+	@POST
+	@Path("/concurrentActions")
+	@Consumes({ MediaType.APPLICATION_JSON })
+	public Response concurrentActions(Boolean concurrentActions)
+	{
+		manager.setConcurrentActions(concurrentActions);
+		return Response.ok().build();
+	}
+	
 	@POST
 	@Path("/cookieWhiteList")
 	@Consumes({ MediaType.APPLICATION_JSON })

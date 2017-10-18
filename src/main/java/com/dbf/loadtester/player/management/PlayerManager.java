@@ -239,6 +239,19 @@ public class PlayerManager implements PlayerManagerMBean
 	}
 	
 	@Override
+	public boolean isConcurrentActions()
+	{
+		return config.isConcurrentActions();
+	}
+	
+	@Override
+	public void setConcurrentActions(boolean concurrentActions)
+	{
+		if(isRunning()) throw new RuntimeException("Can't modify configuration while running.");
+		config.setConcurrentActions(concurrentActions);
+	}
+	
+	@Override
 	public List<String> getCookieWhiteList()
 	{
 		return new ArrayList<String>(config.getCookieWhiteList());

@@ -35,6 +35,9 @@ public class LoadTestCoordinator implements Runnable
 	private final PlayerOptions config;
 	private final List<Thread> workerThreads = new ArrayList<Thread>();
 	private Thread launcherThread;
+	
+	private int testPlanSize ;
+	private int nextTestPlanAction = 0;
 
 	public LoadTestCoordinator(PlayerOptions config)
 	{
@@ -101,6 +104,8 @@ public class LoadTestCoordinator implements Runnable
 			//because the test plan could have been change via JMX/REST
 			config.loadTestPlan();
 
+			testPlanSize = config.getActions().size();
+			
 			log.info("Launching worker threads...");
 			running = true;
 		}
@@ -139,6 +144,16 @@ public class LoadTestCoordinator implements Runnable
 			 {
 				 try
 				{	
+					 
+					//When used in the standard non-concurrent mode, the minimum runtime must ensure that no thread will terminate before the 
+					//last thread has finished at least 1 run.
+					long minRunTime = config.getMinRunTime();
+					if(!config.isConcurrentActions() && minRunTime < 0)
+					{
+						minRunTime = ((config.getThreadCount() - 1) * config.getStaggerTime()) + config.getTotalTestPlanTime();
+						log.info("Using default minimum run time: " + String.format("%.2f",minRunTime/60000.0) + " minutes");
+					}
+					 
 					//Initialize the HTTPClient to share across threads. The most efficient way is to share the client across all threads of the load tester
 					//using a connection pool that is as large as the thread pool. This ensures each thread will have a connection but that they will re-use
 					//connections whenever possible. However, this poses a problem with some load balancers that use sticky sessions since they will assign
@@ -158,7 +173,7 @@ public class LoadTestCoordinator implements Runnable
 						synchronized(running)
 						{	
 							if(!running) return;
-							Thread thread = new Thread(new LoadTestThread(master, config, i, client, requestConverter), "Test Plan - " + i);
+							Thread thread = new Thread(new LoadTestThread(master, config, i, client, requestConverter, minRunTime), "Test Plan - " + i);
 							workerThreads.add(thread);
 							
 							log.info("Starting thread " + i);
@@ -265,5 +280,33 @@ public class LoadTestCoordinator implements Runnable
 			log.info("All worker threads done.");
 			log.info(config.getGlobalPlayerStats().printStatsSummary());
 		}
+	}
+
+	/**
+	 * Used when running test plans concurrently to synchronized the test plan action among threads
+	 * 
+	 * @return
+	 */
+	public synchronized int getNextTestPlanAction()
+	{
+		//Test plan is already complete
+		if(nextTestPlanAction < 0) return -1;
+		
+		nextTestPlanAction++;
+		if(nextTestPlanAction > testPlanSize)
+		{
+			//We have reached the end of test plan
+			if(config.getMinRunTime() > 0)
+			{
+				nextTestPlanAction = 1; 
+			}
+			else
+			{
+				//Run the entire test plan only once
+				nextTestPlanAction = -1;
+				return -1;
+			}
+		}
+		return nextTestPlanAction -1;
 	}
 }
