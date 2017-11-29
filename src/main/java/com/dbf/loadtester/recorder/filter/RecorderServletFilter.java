@@ -90,8 +90,8 @@ public class RecorderServletFilter extends RecorderBase implements Filter
 	private void initManagement()
 	{
 		RecorderManagerMBean manager = new RecorderManager(this);
-		if(options.isEnableJMX()) registerMBean(manager);
-		if(options.isEnableREST()) RecorderManagementServer.initializeServer(manager, options.getRestPort());
+		if(!useParams && options.isEnableJMX()) registerMBean(manager);
+		if(!useParams && options.isEnableREST()) RecorderManagementServer.initializeServer(manager, options.getRestPort());
 	}
 	
 	public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException 

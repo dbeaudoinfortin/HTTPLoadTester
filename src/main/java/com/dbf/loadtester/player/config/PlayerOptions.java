@@ -37,16 +37,16 @@ public class PlayerOptions
 		options.addOption("host", true, "The target host.");
 		options.addOption("httpPort", true, "Port to use for HTTP requests.");
 		options.addOption("httpsPort", true, "Port to use for HTTPs requests.");
-		options.addOption("cookieWhiteList", true, "List of comma-seperated Cookie names that will used from the test plan. All other cookies will be discarded.");
+		options.addOption("cookieWhiteList", true, "List of comma-separated Cookie names that will used from the test plan. All other cookies will be discarded.");
 		options.addOption("pause", false, "Pause and wait for JMX/REST invocation to start.");
 		options.addOption("keepAlive", false, "Keep Load Test Player alive after all threads have halted.");
 		options.addOption("overrideHttps", false, "Override all HTTPs actions with HTTP");
 		options.addOption("applyFixedSubs", false, "Apply fixed substitutions, such as <THREAD_ID>, in the test plan.");
 		options.addOption("variableSubs", true, "Variable substitutions in Base64 encoded Json format.");
-		options.addOption("restPort", true, "Port to use for REST API managment interface.");
-		options.addOption("disableREST", false, "Disable the REST API managment interface.");
-		options.addOption("disableJMX", false, "Disable the JMX managment interface.");
-		options.addOption("shareConnections", false, "Share connections (sockets) accross threads for improved efficiency.");
+		options.addOption("restPort", true, "Port to use for REST API management interface.");
+		options.addOption("disableREST", false, "Disable the REST API management interface.");
+		options.addOption("disableJMX", false, "Disable the JMX management interface.");
+		options.addOption("shareConnections", false, "Share connections (sockets) across threads for improved efficiency.");
 		options.addOption("concurrentActions", false, "Run the test plan actions concurrently. Used for stateless test plans.");
 	}
 	

@@ -26,7 +26,7 @@ public class RecorderManagementServer
 	
 	public static void initializeServer(RecorderManagerMBean manager, int restPort)
 	{
-		log.info("Attempting to start REST API managment server...");
+		log.info("Attempting to start REST API management server...");
 		
 		try
 		{
@@ -36,10 +36,10 @@ public class RecorderManagementServer
 		} 
 		catch(Throwable t)
 		{
-			log.error("Failed to initialize REST API managment server. REST management will not be available", t);
+			log.error("Failed to initialize REST API management server. REST management will not be available", t);
 			return;
 		}
-		log.info("REST API managment server started.");
+		log.info("REST API management server started.");
 	}
 	
 	private static void initializeManagementServer(RecorderManagerMBean manager, int restPort) throws ServletException

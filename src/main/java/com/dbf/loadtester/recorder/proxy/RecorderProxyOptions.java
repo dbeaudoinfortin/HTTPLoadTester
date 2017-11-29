@@ -27,9 +27,9 @@ public class RecorderProxyOptions
 		options.addOption("fHttpsPort", true, "Proxy forwarding HTTPS port.");
 		options.addOption("start", false, "Start recording immediately.");
 		options.addOption("fixedSubs", true, "Fixed substitutions in Base64 encoded Json format.");
-		options.addOption("restPort", true, "Port to use for REST API managment interface.");
-		options.addOption("disableREST", false, "Disable the REST API managment interface.");
-		options.addOption("disableJMX", false, "Disable the JMX managment interface.");
+		options.addOption("restPort", true, "Port to use for REST API management interface.");
+		options.addOption("disableREST", false, "Disable the REST API management interface.");
+		options.addOption("disableJMX", false, "Disable the JMX management interface.");
 		options.addOption("overrideHostHeader", false, "Overrides the 'Host' header on every request to match the forwarding host.");
 		options.addOption("rewriteUrls", false, "Inspects the response of every HTTP request and attempts to rewrite URLs to point back to the proxy.");
 	}
@@ -80,10 +80,10 @@ public class RecorderProxyOptions
 		}
 		catch (NumberFormatException e)
 		{
-			throw new IllegalArgumentException("Invalid REST API managment port number.");
+			throw new IllegalArgumentException("Invalid REST API management port number.");
 		}
 		
-		if(null != restPort && restPort < 0) throw new IllegalArgumentException("Invalid REST API managment port number.");
+		if(null != restPort && restPort < 0) throw new IllegalArgumentException("Invalid REST API management port number.");
 		
 		try
 		{
