@@ -9,6 +9,7 @@ import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpEntityEnclosingRequestBase;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpHead;
+import org.apache.http.client.methods.HttpOptions;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.client.methods.HttpRequestBase;
@@ -98,6 +99,9 @@ public class ApacheRequestConverter extends HTTPConverter
 				break;
 			case "DELETE":
 				httpMethod = new HttpDelete(uri);
+				break;
+			case "OPTIONS":
+				httpMethod = new HttpOptions(uri);
 				break;
 			default:
 				return null;	
