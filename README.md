@@ -68,4 +68,8 @@ You can launch it by invoking the Main method of the com.dbf.loadtester.player.L
  -variableSubs <arg>      Variable substitutions in Base64 encoded Json format.
  ```
  
- Like everything else, it supports management via both JMX and REST. Using either interface, you can get statistics on the execution time of individual actions and overall test plans. These statistics are more detailed than what is printed to the command line and are used by the HTTPLoadTesterGUI for its graphs.
+Like everything else, it supports management via both JMX and REST. Using either interface, you can get statistics on the execution time of individual actions and overall test plans. These statistics are more detailed than what is printed to the command line and are used by the HTTPLoadTesterGUI for its graphs.
+
+## GUI
+
+Some of the command line arguments can get complicated, so I built GUI in Visual Studio. Check it out: https://github.com/dbeaudoinfortin/HTTPLoadTesterGUI It contains a test plan recorder, test plan editor, a test plan player and a basic stats screent o keep on eye on things while your test plan is executing.
