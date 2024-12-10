@@ -73,3 +73,9 @@ Like everything else, it supports management via both JMX and REST. Using either
 ## GUI
 
 Some of the command line arguments can get complicated, so I built GUI in Visual Studio. Check it out: https://github.com/dbeaudoinfortin/HTTPLoadTesterGUI It contains a test plan recorder, test plan editor, a test plan player and a basic stats screent o keep on eye on things while your test plan is executing.
+
+## Legal Stuff
+
+Copyright (c) 2016 David Fortin
+
+This software is provided by David Fortin under the MIT License, meaning you are free to use it however you want, as long as you include the original copyright notice (above) and license notice in any copy you make. You just can't hold me liable in case something goes wrong. License details can be read [here](https://github.com/dbeaudoinfortin/HTTPLoadTester?tab=MIT-1-ov-file)
