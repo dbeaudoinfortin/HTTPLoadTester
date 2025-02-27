@@ -1,4 +1,4 @@
-# HTTPLoadTester
+# HTTPLoadTester <img src="https://github.com/user-attachments/assets/644c49a8-3ab7-4e67-ad70-4e66aa805235" height="35"/>
 
 I didn't like any of the load testers out there, so I built my own on my free time.
 
